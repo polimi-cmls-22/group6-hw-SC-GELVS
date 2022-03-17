@@ -1,3 +1,4 @@
+/* GELVS - SuperCollider */
 s.waitForBoot({
 	/*Global variables */
 	var mainWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, jingleButton;
