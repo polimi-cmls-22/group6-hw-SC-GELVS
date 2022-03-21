@@ -25,6 +25,14 @@ SynthDef(\ring, {
 	}
 ).add;
 
+SynthDef(\addsynth, {
+			arg freq = 440, amp = 0.1, att = 0.01, dec = 0.3, rel = 1;
+			var snd, env, gate = 1,sus = 0.5;
+			env = EnvGen.ar(Env.adsr(att, dec, sus, rel), gate, doneAction: 2);
+			snd = SinOsc.ar(freq, 0, amp) * env;
+			Out.ar(0, snd!2);
+		}).add;
+
 /*Setup of Functions*/
 
 //Funzione che stampa il numero di telefono nello schermo
@@ -151,8 +159,11 @@ playButton.action_({
 
 		//Setup of variables //
 		var display, knobDisplay,buttonBack, numKnob = 1;
+		var notesArray = Array.newClear(number.size);
 		if((me.value == 1) && (number.size > 0),
 			{
+
+				s.freqscope;
 				//Make the phone invisible//
 				mainWindow.visible_(false);
 
@@ -175,27 +186,39 @@ playButton.action_({
 				//Setup of the button to come back to the phone //
 				buttonBack = Button(additiveWindow, Rect(additiveWindow.bounds.width-100,0,100,50))
 				.font_(Font("Artifakt Element Light",10))
-				.states_([["BACK", Color.black],["BACK", Color.black,Color.yellow]]);
+				.states_([["PLAY", Color.black],["STOP", Color.black,Color.yellow]]);
 
-				buttonBack.action_({
-					arg me;
-					if(me.value == 1, {
-						//STOP THE SOUND!!!!!
-						additiveWindow.close;
-					});
 
-				});
+				buttonBack.do({arg item, count;
+					item.action = {
+						arg state;
+						state.value.postln;
+						case
+						{state.value == 1} {
+							notesArray[count] = Synth(\addsynth, [
+								//\freq,  440 * (count+1),
+								\freq,  440 * pow(2,number[count]/12),
+								\amp, 0.1,
+								\att,  0.3,
+								\dec,  0.3,
+								\sus,  0.3,
+								\rel,  0.3]);
+
+						}
+						{state.value == 0} {notesArray[count].release;}
+				}});
+				//if(buttonBack.value == 1,{additiveWindow.close;});
+
+				/*Back to the phone*/
+				additiveWindow.onClose = {
+				//STOP THE SOUND!!!!!
+				mainWindow.visible_(true);
+				playButton.value_(0);
+				"Goodbye!!".postln
+				};
 
 			},{/*else*/}
 		);
-
-		/*Back to the phone*/
-		additiveWindow.onClose = {
-		//STOP THE SOUND!!!!!
-		mainWindow.visible_(true);
-		playButton.value_(0);
-		"Goodbye!!".postln
-		};
 
 });//End of playButton.action
 
