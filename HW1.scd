@@ -1,8 +1,12 @@
+/*
+TODO:
+Sistemare dimensioni knob
+*/
 s.waitForBoot({
 
 /*Setup of  variables */
 var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, jingleButton;
-var funPrintText;
+var funPrintText, funPrintKnobText;
 var space = 0, counterNumbers = 0;
 var number = Array.new(10);
 
@@ -22,11 +26,20 @@ SynthDef(\ring, {
 /*Setup of Functions*/
 funPrintText = {
 		arg numberToPrint,viewPrint;
-		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height,))
+		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
 		.string_(numberToPrint.asString)
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",30))
 		.background_(Color.cyan)
+		.front;
+	};
+
+funPrintKnobText = {
+		arg viewPrint;
+		TextView(viewPrint,Rect(0,0,400,30))
+		.string_("Value1    Value2     Value3      Value4     Value5")
+		.editable_(false)
+		.font_(Font("Artifakt Element Light",15))
 		.front;
 	};
 
@@ -57,15 +70,8 @@ StaticText.new(phone,Rect(phone.bounds.width/4,0,300,100)).string_("NOCHIA 2022"
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
 
 /*-----------------------------------------------------------------------------------*/
-/* INITIALIZATION OF THE PHONE NUMBER LINE
-TextView(phoneScreen,Rect(0,phoneScreen.bounds.top/2 +25,phoneScreen.bounds.width, phoneScreen.bounds.height,))
-	.string_(number.asString)
-	.editable_(false)
-	.font_(Font("Artifakt Element Light",30))
-	.background_(Color.cyan)
-	.front;
-	*/
-	funPrintText.value(number,phoneScreen);
+/* INITIALIZATION OF THE PHONE NUMBER LINE */
+funPrintText.value(number,phoneScreen);
 /*-----------------------------------------------------------------------------------*/
 
 //Setup of the viewa of the phone//
@@ -76,8 +82,8 @@ phoneKeyboard.decorator = FlowLayout(phoneKeyboard.bounds, margin: 40@20, gap: 5
 //Setup of the buttons of the phone//
 playButton = Button(phoneControl, Rect(40,10,100,50)).font_(Font("Artifakt Element Light",10))
 	.states_([
-		["PLAY", Color.black,Color.green],
-		["STOP",Color.black, Color.red]
+		["", Color.black],
+		["", Color.black]
 	]);
 
 jingleButton = Button(phoneControl, Rect(250,10,100,50))
@@ -122,6 +128,10 @@ buttonArray.do({
 				number.removeAt(counterNumbers);
 				funPrintText.value(number,phoneScreen);
 			});
+			if( (number.size>0),
+				{playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);},
+				{playButton.states_([["", Color.black],["", Color.black]]);}
+			);
 
 		});
 
@@ -129,13 +139,34 @@ buttonArray.do({
 
 playButton.action_({
 		arg me;
+		var display, knobDisplay,buttonBack, numKnob = 1;
 		if((me.value == 1) && (number.size > 0),
 			{
 				mainWindow.visible_(false);
-				additiveWindow = Window.new("Additive Synthesis",Rect(Window.screenBounds.width/3 + 10,mainWindow.bounds.top + 30,900,700))
+				numKnob = number.size;
+				//additiveWindow = Window.new("Additive Synthesis",Rect(Window.screenBounds.width/3 + 10,mainWindow.bounds.top + 30,900,700))
+				additiveWindow = Window.new("Additive Synthesis",Rect(10,mainWindow.bounds.top + 30,900,700))
 				.alwaysOnTop_(true)
-				.background_(Color.yellow)
+				.background_(Color.new255(50,50,50))
 				.front;
+				display = CompositeView.new(additiveWindow,Rect(10,10,350,70*numKnob + 30)).background_(Color.black);
+				funPrintKnobText.value(display);
+				display.decorator = FlowLayout(display.bounds, margin:0@40,gap: 5@5);
+				knobDisplay = Array.fill2D(numKnob,5, {Knob(display, 60@50)});
+
+				buttonBack = Button(additiveWindow, Rect(additiveWindow.bounds.width-100,0,100,50))
+				.font_(Font("Artifakt Element Light",10))
+				.states_([["BACK", Color.black],["BACK", Color.black,Color.yellow]]);
+				buttonBack.action_({
+					arg me;
+					if(me.value == 1, {
+						additiveWindow.close;
+						mainWindow.visible_(true);
+						playButton.value_(0);
+					});
+
+				});
+
 			},{if((me.value == 0) && (number.size > 0), {additiveWindow.close;})}
 		);
 
@@ -144,5 +175,4 @@ playButton.action_({
 "Additive Synthesis Demo Starts".postln;
 
 });
-
 
