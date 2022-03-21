@@ -1,6 +1,8 @@
 /*
 TODO:
-Sistemare dimensioni knob
+- Jingle window
+- Generate sound and pattern of the elements
+- End of the additive window
 */
 s.waitForBoot({
 
@@ -24,16 +26,18 @@ SynthDef(\ring, {
 ).add;
 
 /*Setup of Functions*/
+
+//Funzione che stampa il numero di telefono nello schermo
 funPrintText = {
 		arg numberToPrint,viewPrint;
 		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
 		.string_(numberToPrint.asString)
 		.editable_(false)
-		.font_(Font("Artifakt Element Light",30))
+		.font_(Font("Artifakt Element Light",34))
 		.background_(Color.cyan)
 		.front;
 	};
-
+//Funzione che stampa staticamente il nome delle variabili delle sinusoidi
 funPrintKnobText = {
 		arg viewPrint;
 		TextView(viewPrint,Rect(0,0,400,30))
@@ -56,7 +60,6 @@ mainWindow = Window.new("Fourier's phone - Additive Synthesis",Rect(Window.scree
 /*CLOSE ALL AND STOP ALL*/
 mainWindow.onClose = {
 		Server.freeAll;
-		additiveWindow.close;
 		"Bye Bye!".postln
 };
 CmdPeriod.doOnce({mainWindow.close});
@@ -66,15 +69,14 @@ phone = CompositeView.new(mainWindow,Rect(10,10,mainWindow.bounds.width - 20,mai
 	.background_(Color.grey);
 StaticText.new(phone,Rect(phone.bounds.width/4,0,300,100)).string_("NOCHIA 2022").font_(Font("Artifakt Element Light",40));
 
-//Phone screen //
+//Phone screen//
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
 
-/*-----------------------------------------------------------------------------------*/
-/* INITIALIZATION OF THE PHONE NUMBER LINE */
+//INITIALIZATION OF THE PHONE NUMBER LINE//
 funPrintText.value(number,phoneScreen);
-/*-----------------------------------------------------------------------------------*/
 
-//Setup of the viewa of the phone//
+
+//Setup of the view of the phone//
 phoneControl = CompositeView.new(phone,Rect(40,300,400,70)).background_(Color.new255(50,50,50));
 phoneKeyboard = CompositeView.new(phone,Rect(40,370,400,250)).background_(Color.black);
 phoneKeyboard.decorator = FlowLayout(phoneKeyboard.bounds, margin: 40@20, gap: 5@5 );
@@ -89,14 +91,13 @@ playButton = Button(phoneControl, Rect(40,10,100,50)).font_(Font("Artifakt Eleme
 jingleButton = Button(phoneControl, Rect(250,10,100,50))
 	.font_(Font("Artifakt Element Light",10))
 	.states_([
-		["PLAY JINGLE", Color.black],
-		["STOP JINGLE",Color.black, Color.cyan]
+		["", Color.black],
+		["",Color.black]
 	]);
 
 buttonArray = Array.fill(12, {Button(phoneKeyboard, 100@50)});
 
 /* Setup Actions of Buttons */
-
 buttonArray.do({
 		arg me, count;
 		me.states = [
@@ -107,72 +108,98 @@ buttonArray.do({
 		if(count == 10, {me.states = [["0"]]});
 		if(count == 11, {me.states = [["#"]]});
 		me.font_(Font("Artifakt Element Light",20));
-});
+});//End of buttonarray.do
 
 buttonArray.do({
 		arg me, count;
 		me.mouseDownAction_({
 			if( ((count != 9) && (count != 11)),{a = Synth(\ring, [\freq,70+(50*me.string.asInteger)])})
 		})
-		.action_({ arg me;
+		.action_({
+			arg me;
 			playButton.value_(0);
 			if( (counterNumbers < 10) && (me.string != "*") && (me.string != "#") ,
 				{
 				number.add(me.string.asInteger);
 				funPrintText.value(number,phoneScreen);
 				counterNumbers = counterNumbers+1;
-
-			});
-			if( (me.string == "#")&&(counterNumbers>0),{
-				counterNumbers = counterNumbers-1;
-				number.removeAt(counterNumbers);
-				funPrintText.value(number,phoneScreen);
-			});
-			if( (number.size>0),
-				{playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);},
-				{playButton.states_([["", Color.black],["", Color.black]]);}
+				}
 			);
+			if( (me.string == "#")&&(counterNumbers>0),
+				{
+					counterNumbers = counterNumbers-1;
+					number.removeAt(counterNumbers);
+					funPrintText.value(number,phoneScreen);
 
+				}
+			);
+			if( (number.size>0),
+				{
+					playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);
+					jingleButton.states_([["PLAY JINGLE", Color.black],["STOP JINGLE",Color.white, Color.red]]);
+				},
+				{
+					playButton.states_([["", Color.black],["", Color.black]]);
+					jingleButton.states_([["", Color.black],["",Color.white]]);
+				}
+			);
 		});
-
-	});
+});//End of buttonArray.do.action
 
 playButton.action_({
 		arg me;
+
+		//Setup of variables //
 		var display, knobDisplay,buttonBack, numKnob = 1;
 		if((me.value == 1) && (number.size > 0),
 			{
+				//Make the phone invisible//
 				mainWindow.visible_(false);
+
+				//Setup of the number of knobs (they depend by the size of the phone number)//
 				numKnob = number.size;
+
+				//Setup of the additive Window //
 				//additiveWindow = Window.new("Additive Synthesis",Rect(Window.screenBounds.width/3 + 10,mainWindow.bounds.top + 30,900,700))
 				additiveWindow = Window.new("Additive Synthesis",Rect(10,mainWindow.bounds.top + 30,900,700))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
-				display = CompositeView.new(additiveWindow,Rect(10,10,350,70*numKnob + 30)).background_(Color.black);
+
+				//Setup of the display that contains the knobs //
+				display = CompositeView.new(additiveWindow,Rect(0,0,350,60*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(display);
 				display.decorator = FlowLayout(display.bounds, margin:0@40,gap: 5@5);
 				knobDisplay = Array.fill2D(numKnob,5, {Knob(display, 60@50)});
 
+				//Setup of the button to come back to the phone //
 				buttonBack = Button(additiveWindow, Rect(additiveWindow.bounds.width-100,0,100,50))
 				.font_(Font("Artifakt Element Light",10))
 				.states_([["BACK", Color.black],["BACK", Color.black,Color.yellow]]);
+
 				buttonBack.action_({
 					arg me;
 					if(me.value == 1, {
+						//STOP THE SOUND!!!!!
 						additiveWindow.close;
-						mainWindow.visible_(true);
-						playButton.value_(0);
 					});
 
 				});
 
-			},{if((me.value == 0) && (number.size > 0), {additiveWindow.close;})}
+			},{/*else*/}
 		);
 
-	});
+		/*Back to the phone*/
+		additiveWindow.onClose = {
+		//STOP THE SOUND!!!!!
+		mainWindow.visible_(true);
+		playButton.value_(0);
+		"Goodbye!!".postln
+		};
+
+});//End of playButton.action
 
 "Additive Synthesis Demo Starts".postln;
 
-});
+});//End of the code
 
