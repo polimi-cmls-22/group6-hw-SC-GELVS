@@ -1,8 +1,8 @@
 /*
 TODO:
 - Jingle window
-- Generate sound and pattern of the elements
-- End of the additive window
+- Fix the pattern
+- Put the values in the knobs
 */
 s.waitForBoot({
 
@@ -49,7 +49,7 @@ funPrintText = {
 funPrintKnobText = {
 		arg viewPrint;
 		TextView(viewPrint,Rect(0,0,400,30))
-		.string_("Value1    Value2     Value3      Value4     Value5")
+		.string_("Value1      Value2       Value3       Value4      Value5")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
 		.front;
@@ -156,14 +156,16 @@ buttonArray.do({
 
 playButton.action_({
 		arg me;
-
 		//Setup of variables //
-		var display, knobDisplay,buttonBack, numKnob = 1;
+		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1;
 		var notesArray = Array.newClear(number.size);
+
+		//Setup of the plots//
+		s.freqscope;
+		s.scope;
+
 		if((me.value == 1) && (number.size > 0),
 			{
-
-				s.freqscope;
 				//Make the phone invisible//
 				mainWindow.visible_(false);
 
@@ -171,47 +173,57 @@ playButton.action_({
 				numKnob = number.size;
 
 				//Setup of the additive Window //
-				//additiveWindow = Window.new("Additive Synthesis",Rect(Window.screenBounds.width/3 + 10,mainWindow.bounds.top + 30,900,700))
-				additiveWindow = Window.new("Additive Synthesis",Rect(10,mainWindow.bounds.top + 30,900,700))
+				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,60*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
 
 				//Setup of the display that contains the knobs //
-				display = CompositeView.new(additiveWindow,Rect(0,0,350,60*numKnob + 50)).background_(Color.black);
-				funPrintKnobText.value(display);
-				display.decorator = FlowLayout(display.bounds, margin:0@40,gap: 5@5);
-				knobDisplay = Array.fill2D(numKnob,5, {Knob(display, 60@50)});
+				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,60*numKnob + 50)).background_(Color.black);
+				funPrintKnobText.value(displayKnobs);
+				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
+				knobMatrix = Array.fill2D(numKnob,5, {Knob(displayKnobs, 50@50)});
 
-				//Setup of the button to come back to the phone //
-				buttonBack = Button(additiveWindow, Rect(additiveWindow.bounds.width-100,0,100,50))
-				.font_(Font("Artifakt Element Light",10))
-				.states_([["PLAY", Color.black],["STOP", Color.black,Color.yellow]]);
+				//Setup of the display that contains the buttons for start and stop sound//
+				displayButtons = CompositeView.new(additiveWindow,
+					Rect(displayKnobs.bounds.width,0,120,60*numKnob + 50)).background_(Color.black);
+				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 20@10);
+				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
+				//Definition of the states of the start and stop buttons
+				buttonsWave.do({
+					arg me, index;
+					me.states = [
+						[number[index].asString, Color.black],
+						[number[index].asString, Color.black, Color.green]
+					]
+				});
 
-				buttonBack.do({arg item, count;
-					item.action = {
+				//Definition of the action of the start and stop buttons
+				buttonsWave.do({
+					arg me, index;
+					me.action = {
 						arg state;
-						state.value.postln;
 						case
-						{state.value == 1} {
-							notesArray[count] = Synth(\addsynth, [
-								//\freq,  440 * (count+1),
-								\freq,  440 * pow(2,number[count]/12),
-								\amp, 0.1,
-								\att,  0.3,
-								\dec,  0.3,
-								\sus,  0.3,
-								\rel,  0.3]);
-
-						}
-						{state.value == 0} {notesArray[count].release;}
-				}});
-				//if(buttonBack.value == 1,{additiveWindow.close;});
+						{state.value == 1}
+						//Start the sound
+						{
+							notesArray[index] = Synth(\addsynth, [
+								\freq,  440 * (index+1),
+								//\amp, 1/number.size,
+								\amp, 1/10,
+								\att,  0.1,
+								\dec,  0.2,
+								\rel,  0.6])}
+						{state.value == 0}
+						//Stop the sound
+						{notesArray[index].free; /*Maybe not the best way, but it works*/}
+					}
+				});
 
 				/*Back to the phone*/
 				additiveWindow.onClose = {
-				//STOP THE SOUND!!!!!
+				s.freeAll;//Stop the sound
 				mainWindow.visible_(true);
 				playButton.value_(0);
 				"Goodbye!!".postln
