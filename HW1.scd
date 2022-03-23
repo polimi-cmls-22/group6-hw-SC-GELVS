@@ -1,14 +1,14 @@
 /*
 TODO:
 - Jingle window
-- Fix the pattern
 - Put the values in the knobs
+- button * for change the type of signal
 */
 s.waitForBoot({
 
 /*Setup of  variables */
 var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, jingleButton;
-var funPrintText, funPrintKnobText;
+var funPrintText, funPrintKnobText, funNote;
 var space = 0, counterNumbers = 0;
 var number = Array.new(10);
 
@@ -26,14 +26,40 @@ SynthDef(\ring, {
 ).add;
 
 SynthDef(\addsynth, {
-			arg freq = 440, amp = 0.1, att = 0.01, dec = 0.3, rel = 1;
+			arg fund = 440, amp = 0.1, att = 0.01, dec = 0.3, rel = 1;
 			var snd, env, gate = 1,sus = 0.5;
 			env = EnvGen.ar(Env.adsr(att, dec, sus, rel), gate, doneAction: 2);
-			snd = SinOsc.ar(freq, 0, amp) * env;
+			snd = SinOsc.ar(fund, 0, amp) * env;
 			Out.ar(0, snd!2);
 		}).add;
 
+SynthDef.new(\addSin, {
+		arg ampHz=4, fund=440, maxPartial=4, width=0.5;
+		var amp, sig,freq;
+		amp = SinOsc.kr(ampHz,0,0.12) * 0.5;
+		freq = LFNoise0.kr(4).exprange(fund, fund * maxPartial).round(fund);
+		freq = freq * (LFPulse.kr(8)+1);
+		sig = SinOsc.ar(freq, width, amp);
+		sig = FreeVerb.ar(sig, 0.7, 0.8, 0.25);
+		Out.ar(0, sig);
+		Out.ar(1, sig);
+	}).add;
+
 /*Setup of Functions*/
+	funNote = {
+		arg index, number;
+		o = case
+				{index==0}{523.3*pow(2,number[index]/12)}//Do5
+				{index==1}{587.3*pow(2,number[index]/12)}//Re5
+				{index==2}{659.3*pow(2,number[index]/12)}//Mi5
+				{index==3}{689.5*pow(2,number[index]/12)}//Fa5
+				{index==4}{784*pow(2,number[index]/12)}//Sol5
+				{index==5}{880*pow(2,number[index]/12)}//La5
+				{index==6}{987.8*pow(2,number[index]/12)}//Si5
+				{index==7}{1047*pow(2,number[index]/12)}//Do6
+		        {index==8}{1175*pow(2,number[index]/12)}//Re6
+				{index==9}{1319*pow(2,number[index]/12)};//Mi6,
+};
 
 //Funzione che stampa il numero di telefono nello schermo
 funPrintText = {
@@ -54,7 +80,6 @@ funPrintKnobText = {
 		.font_(Font("Artifakt Element Light",15))
 		.front;
 	};
-
 /*Setup of Routine*/
 
 /*Initialization of window components*/
@@ -209,17 +234,47 @@ playButton.action_({
 						//Start the sound
 						{
 							notesArray[index] = Synth(\addsynth, [
-								\freq,  440 * (index+1),
+								\fund,440 *(index+1),
 								//\amp, 1/number.size,
-								\amp, 1/10,
+								\amp, 0.1,
 								\att,  0.1,
 								\dec,  0.2,
-								\rel,  0.6])}
+								\rel,  0.6]);
+						}
+
+							/*
+						notesArray[index] = Synth(\addSin,[
+								\fund,case
+								{index==0}{523.3*pow(2,number[index]/12)}//Do5
+								{index==1}{587.3*pow(2,number[index]/12)}//Re5
+								{index==2}{659.3*pow(2,number[index]/12)}//Mi5
+								{index==3}{689.5*pow(2,number[index]/12)}//Fa5
+								{index==4}{784*pow(2,number[index]/12)}//Sol5
+								{index==5}{880*pow(2,number[index]/12)}//La5
+								{index==6}{987.8*pow(2,number[index]/12)}//Si5
+								{index==7}{1047*pow(2,number[index]/12)}//Do6
+								{index==8}{1175*pow(2,number[index]/12)}//Re6
+								{index==9}{1319*pow(2,number[index]/12)},//Mi6,
+								\ampHz, 5,
+								\maxPartial, 5,
+								\width, number[index]
+						]);}
+							*/
+
 						{state.value == 0}
 						//Stop the sound
 						{notesArray[index].free; /*Maybe not the best way, but it works*/}
 					}
 				});
+
+				knobMatrix.do({
+					arg me, count;
+					me.at(0,count).action_({arg me;count.postln;
+						notesArray[count].set(\fund, 440 + me.value.linlin(0,1,-30,30));});
+					me.at(1,count).action_({"Due".postln;});
+					me.at(2,count).action_({"Tre".postln;});
+				});
+
 
 				/*Back to the phone*/
 				additiveWindow.onClose = {
