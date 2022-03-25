@@ -49,16 +49,13 @@ SynthDef.new(\addSin, {
 f = {
 		arg index, number;
 		o = case
-				{index==0}{523.3*pow(2,number/12)}//Do5
-				{index==1}{587.3*pow(2,number/12)}//Re5
-				{index==2}{659.3*pow(2,number/12)}//Mi5
-				{index==3}{689.5*pow(2,number/12)}//Fa5
-				{index==4}{784*pow(2,number/12)}//Sol5
-				{index==5}{880*pow(2,number/12)}//La5
-				{index==6}{987.8*pow(2,number/12)}//Si5
-				{index==7}{1047*pow(2,number/12)}//Do6
-		        {index==8}{1175*pow(2,number/12)}//Re6
-                {index==9}{1319*pow(2,number/12)};//Mi6,
+				{index==0}{130.8*pow(2,number/12)}//Do3
+				{index==1}{146.8*pow(2,number/12)}//Re3
+				{index==2}{164.8*pow(2,number/12)}//Mi3
+				{index==3}{174.6*pow(2,number/12)}//Fa3
+				{index==4}{196*pow(2,number/12)}//Sol3
+				{index==5}{220*pow(2,number/12)}//La3
+				{index==6}{246.9*pow(2,number/12)}//Si3
 };
 
 
@@ -152,7 +149,7 @@ buttonArray.do({
 		.action_({
 			arg me;
 			playButton.value_(0);
-			if( (counterNumbers < 10) && (me.string != "*") && (me.string != "#") ,
+			if( (counterNumbers < 7) && (me.string != "*") && (me.string != "#") ,
 				{
 				number.add(me.string.asInteger);
 				funPrintText.value(number,phoneScreen);
@@ -199,21 +196,21 @@ playButton.action_({
 				numKnob = number.size;
 
 				//Setup of the additive Window //
-				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,60*numKnob + 50))
+				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
 
 				//Setup of the display that contains the knobs //
-				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,60*numKnob + 50)).background_(Color.black);
+				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,70*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
-				knobMatrix = Array.fill2D(numKnob,5, {EZKnob(displayKnobs, 50@50)});
+				knobMatrix = Array.fill2D(numKnob,5, {EZKnob(displayKnobs,50@60)});
 
 				//Setup of the display that contains the buttons for start and stop sound//
 				displayButtons = CompositeView.new(additiveWindow,
-					Rect(displayKnobs.bounds.width,0,120,60*numKnob + 50)).background_(Color.black);
-				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 20@10);
+					Rect(displayKnobs.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
+				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
 				//Definition of the states of the start and stop buttons
@@ -261,22 +258,23 @@ playButton.action_({
 
 				knobMatrix.do({
 					arg me, count;
-					me.at(0,count).value_(0.5);
+					//me.at(0,count).value_(0.5);
+					me.at(0,count).set(\freq,unitWidth:30,initVal:6000.rand,layout:\horz);
 					me.at(0,count).action_({arg me;count.postln;
 						notesArray[count].set(\fund, f.value(count,number[count]) + me.value.linlin(0,1,-200,200));});
 
-					me.at(1,count).value_(1);
+					me.at(1,count).value_(0.5);
 					me.at(1,count).action_({arg me;count.postln;
 						notesArray[count].set(\ampHz, me.value.linlin(0,1,0,20));});
 
 
-					me.at(2,count).value_(1);
+					me.at(2,count).value_(0.5);
 					me.at(2,count).action_({arg me;count.postln;
 						notesArray[count].set(\maxPartial, me.value.linlin(0,1,0,20));});
-					me.at(3,count).value_(1);
+					me.at(3,count).value_(0.5);
 					me.at(3,count).action_({arg me;count.postln;
 						notesArray[count].set(\vel, me.value.linlin(0,1,1,10));});
-					me.at(3,count).value_(0.2);
+					me.at(3,count).value_(0.5);
 					me.at(4,count).action_({arg me;count.postln;
 						notesArray[count].set(\totalAmp, me.value.linlin(0,1,0,1));});
 
