@@ -34,10 +34,10 @@ SynthDef(\addsynth, {
 		}).add;
 
 SynthDef.new(\addSin, {
-		arg ampHz=10, fund=440, maxPartial=4, width=0;
+		arg ampHz=10, fund=440, maxPartial=4, width=0, totalAmp=0.5,vel = 1;
 		var amp, sig,freq;
-		amp = SinOsc.kr(ampHz,0,0.12) * 0.5;
-		freq = LFNoise0.kr(4).exprange(fund, fund /** maxPartial*/).round(fund);
+		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
+		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
 		//freq = freq * (LFPulse.kr(8)+1);
 		sig = SinOsc.ar(freq, width, amp);
 		//sig = FreeVerb.ar(sig, 0.7, 0.8, 0.25);
@@ -60,6 +60,7 @@ f = {
 		        {index==8}{1175*pow(2,number/12)}//Re6
                 {index==9}{1319*pow(2,number/12)};//Mi6,
 };
+
 
 //Funzione che stampa il numero di telefono nello schermo
 funPrintText = {
@@ -207,7 +208,7 @@ playButton.action_({
 				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,60*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
-				knobMatrix = Array.fill2D(numKnob,5, {Knob(displayKnobs, 50@50)});
+				knobMatrix = Array.fill2D(numKnob,5, {EZKnob(displayKnobs, 50@50)});
 
 				//Setup of the display that contains the buttons for start and stop sound//
 				displayButtons = CompositeView.new(additiveWindow,
@@ -244,9 +245,11 @@ playButton.action_({
 						*/
 						notesArray[index] = Synth(\addSin,[
 								\fund,f.value(index,number[index]),
-								\ampHz, 5,
-								\maxPartial, 5,
-								\width, number[index]
+								\ampHz, 1,
+								\maxPartial, 1,
+								\width, number[index],
+								\totalAmp, 0.2,
+								\vel, 1
 						]);}
 
 
@@ -258,10 +261,25 @@ playButton.action_({
 
 				knobMatrix.do({
 					arg me, count;
+					me.at(0,count).value_(0.5);
 					me.at(0,count).action_({arg me;count.postln;
 						notesArray[count].set(\fund, f.value(count,number[count]) + me.value.linlin(0,1,-200,200));});
-					me.at(1,count).action_({"Due".postln;});
-					me.at(2,count).action_({"Tre".postln;});
+
+					me.at(1,count).value_(1);
+					me.at(1,count).action_({arg me;count.postln;
+						notesArray[count].set(\ampHz, me.value.linlin(0,1,0,20));});
+
+
+					me.at(2,count).value_(1);
+					me.at(2,count).action_({arg me;count.postln;
+						notesArray[count].set(\maxPartial, me.value.linlin(0,1,0,20));});
+					me.at(3,count).value_(1);
+					me.at(3,count).action_({arg me;count.postln;
+						notesArray[count].set(\vel, me.value.linlin(0,1,1,10));});
+					me.at(3,count).value_(0.2);
+					me.at(4,count).action_({arg me;count.postln;
+						notesArray[count].set(\totalAmp, me.value.linlin(0,1,0,1));});
+
 				});
 
 
