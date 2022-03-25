@@ -49,13 +49,13 @@ SynthDef.new(\addSin, {
 f = {
 		arg index, number;
 		o = case
-				{index==0}{130.8*pow(2,number/12)}//Do3
-				{index==1}{146.8*pow(2,number/12)}//Re3
-				{index==2}{164.8*pow(2,number/12)}//Mi3
-				{index==3}{174.6*pow(2,number/12)}//Fa3
-				{index==4}{196*pow(2,number/12)}//Sol3
-				{index==5}{220*pow(2,number/12)}//La3
-				{index==6}{246.9*pow(2,number/12)}//Si3
+				{index==0}{2*130.8*pow(2,number/12)}//Do3
+				{index==1}{2*146.8*pow(2,number/12)}//Re3
+				{index==2}{2*164.8*pow(2,number/12)}//Mi3
+				{index==3}{2*174.6*pow(2,number/12)}//Fa3
+				{index==4}{2*196*pow(2,number/12)}//Sol3
+				{index==5}{2*220*pow(2,number/12)}//La3
+				{index==6}{2*246.9*pow(2,number/12)}//Si3
 };
 
 
@@ -73,7 +73,7 @@ funPrintText = {
 funPrintKnobText = {
 		arg viewPrint;
 		TextView(viewPrint,Rect(0,0,400,30))
-		.string_("Value1      Value2       Value3       Value4      Value5")
+		.string_("Freq            Amp        Cutoff      AmpHz       Jingle")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
 		.front;
@@ -245,7 +245,7 @@ playButton.action_({
 								\ampHz, 1,
 								\maxPartial, 1,
 								\width, number[index],
-								\totalAmp, 0.2,
+								\totalAmp, 1/number.size,
 								\vel, 1
 						]);}
 
@@ -258,25 +258,36 @@ playButton.action_({
 
 				knobMatrix.do({
 					arg me, count;
-					//me.at(0,count).value_(0.5);
-					me.at(0,count).set(\freq,unitWidth:30,initVal:6000.rand,layout:\horz);
-					me.at(0,count).action_({arg me;count.postln;
-						notesArray[count].set(\fund, f.value(count,number[count]) + me.value.linlin(0,1,-200,200));});
+					//Frequency range//
+					me.at(0,count).set(
+						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
+						initVal:f.value(count,number[count]));
+					me.at(0,count).action_({arg me;
+						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
 
-					me.at(1,count).value_(0.5);
-					me.at(1,count).action_({arg me;count.postln;
-						notesArray[count].set(\ampHz, me.value.linlin(0,1,0,20));});
-
-
-					me.at(2,count).value_(0.5);
+					//Amplitude//
+					me.at(1,count).set(spec:ControlSpec(0.1,(1/number.size),\lin,0.1,(1/number.size)),initVal:1/number.size);
+					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
+/*
+					me.at(2,count).set(
+						spec:ControlSpec((1/7 - , f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
+						initVal:f.value(count,number[count]));
 					me.at(2,count).action_({arg me;count.postln;
-						notesArray[count].set(\maxPartial, me.value.linlin(0,1,0,20));});
-					me.at(3,count).value_(0.5);
+						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
+
+					me.at(3,count).set(
+						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
+						initVal:f.value(count,number[count]));
 					me.at(3,count).action_({arg me;count.postln;
-						notesArray[count].set(\vel, me.value.linlin(0,1,1,10));});
-					me.at(3,count).value_(0.5);
+						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
+
+
+					me.at(4,count).set(
+						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
+						initVal:f.value(count,number[count]));
 					me.at(4,count).action_({arg me;count.postln;
-						notesArray[count].set(\totalAmp, me.value.linlin(0,1,0,1));});
+						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
+					*/
 
 				});
 
