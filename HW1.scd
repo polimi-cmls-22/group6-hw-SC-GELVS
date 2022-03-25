@@ -34,12 +34,13 @@ SynthDef(\addsynth, {
 		}).add;
 
 SynthDef.new(\addSin, {
-		arg ampHz=10, fund=440, maxPartial=4, width=0, totalAmp=0.5,vel = 1;
+		arg ampHz=10, fund=440, maxPartial=4, width=0, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
 		var amp, sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
 		//freq = freq * (LFPulse.kr(8)+1);
 		sig = SinOsc.ar(freq, width, amp);
+		sig = RLPF.ar(sig, fc, rq);
 		//sig = FreeVerb.ar(sig, 0.7, 0.8, 0.25);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
@@ -246,7 +247,8 @@ playButton.action_({
 								\maxPartial, 1,
 								\width, number[index],
 								\totalAmp, 1/number.size,
-								\vel, 1
+								\vel, 1,
+								\fc, 20000
 						]);}
 
 
@@ -268,13 +270,11 @@ playButton.action_({
 					//Amplitude//
 					me.at(1,count).set(spec:ControlSpec(0.1,(1/number.size),\lin,0.1,(1/number.size)),initVal:1/number.size);
 					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
-/*
-					me.at(2,count).set(
-						spec:ControlSpec((1/7 - , f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
-						initVal:f.value(count,number[count]));
-					me.at(2,count).action_({arg me;count.postln;
-						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
 
+					me.at(2,count).set(spec:ControlSpec(0,20000,\lin,10,20000), initVal:20000);
+					me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
+
+/*
 					me.at(3,count).set(
 						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
 						initVal:f.value(count,number[count]));
