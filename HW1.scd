@@ -1,15 +1,18 @@
 /*
-TODO:
-- Jingle window
-- Put the values in the knobs
-- button * for change the type of signal
+
+TODO
+1- Comment the code
+2- Other debug
+3- Write report
+4-Write names
+
 */
 s.waitForBoot({
 
 /*Setup of  variables */
-var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, jingleButton;
+var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, signalButton;
 var funPrintText, funPrintKnobText, funNote;
-var space = 0, counterNumbers = 0;
+var space = 0, counterNumbers = 0, wave=0;
 var number = Array.new(10);
 
 Window.closeAll;
@@ -17,7 +20,7 @@ GUI.current;
 
 /*Setup of SyntDef*/
 SynthDef(\ring, {
-	arg freq = 44, amp = 0.1;
+	arg freq = 440, amp = 0.1;
 	var env, snd;
 	snd = EnvGen.kr(Env.new([1,0.7,0.8,0],[0.1,0.1,0.2,0.1]), doneAction: 2) * LFPulse.ar(freq,0,mul:0.3);
 	Out.ar(0, snd*0.5);
@@ -25,23 +28,35 @@ SynthDef(\ring, {
 	}
 ).add;
 
-SynthDef(\addsynth, {
-			arg fund = 440, amp = 0.1, att = 0.01, dec = 0.3, rel = 1;
-			var snd, env, gate = 1,sus = 0.5;
-			env = EnvGen.ar(Env.adsr(att, dec, sus, rel), gate, doneAction: 2);
-			snd = SinOsc.ar(fund, 0, amp) * env;
-			Out.ar(0, snd!2);
-		}).add;
-
 SynthDef.new(\addSin, {
-		arg ampHz=10, fund=440, maxPartial=4, width=0, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
-		var amp, sig,freq;
+		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
+		var amp, sig,freq, sen;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-		//freq = freq * (LFPulse.kr(8)+1);
 		sig = SinOsc.ar(freq, width, amp);
 		sig = RLPF.ar(sig, fc, rq);
-		//sig = FreeVerb.ar(sig, 0.7, 0.8, 0.25);
+		Out.ar(0, sig);
+		Out.ar(1, sig);
+	}).add;
+
+SynthDef.new(\addSaw, {
+		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
+		var amp, sig,freq, sen;
+		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
+		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
+		sig = LFSaw.ar(freq, width, amp);
+		sig = RLPF.ar(sig, fc, rq);
+		Out.ar(0, sig);
+		Out.ar(1, sig);
+	}).add;
+
+SynthDef.new(\addTri, {
+		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
+		var amp, sig,freq, sen;
+		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
+		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
+	    sig = LFTri.ar(freq,width,amp);
+		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
@@ -70,6 +85,7 @@ funPrintText = {
 		.background_(Color.cyan)
 		.front;
 	};
+
 //Funzione che stampa staticamente il nome delle variabili delle sinusoidi
 funPrintKnobText = {
 		arg viewPrint;
@@ -79,6 +95,7 @@ funPrintKnobText = {
 		.font_(Font("Artifakt Element Light",15))
 		.front;
 	};
+
 /*Setup of Routine*/
 
 /*Initialization of window components*/
@@ -116,16 +133,16 @@ phoneKeyboard.decorator = FlowLayout(phoneKeyboard.bounds, margin: 40@20, gap: 5
 //Setup of the buttons of the phone//
 playButton = Button(phoneControl, Rect(40,10,100,50)).font_(Font("Artifakt Element Light",10))
 	.states_([
-		["", Color.black],
-		["", Color.black]
-	]);
+		["", Color.black,Color.new255(100,100,100)]])
+	.font_(Font("Artifakt Element Light",15));
 
-jingleButton = Button(phoneControl, Rect(250,10,100,50))
+signalButton = Button(phoneControl, Rect(250,10,100,50))
 	.font_(Font("Artifakt Element Light",10))
 	.states_([
-		["", Color.black],
-		["",Color.black]
-	]);
+		["", Color.black,Color.new255(100,100,100)]])
+	.font_(Font("Artifakt Element Light",15));
+
+signalButton.action_({arg me; wave = me.value;});
 
 buttonArray = Array.fill(12, {Button(phoneKeyboard, 100@50)});
 
@@ -145,7 +162,7 @@ buttonArray.do({
 buttonArray.do({
 		arg me, count;
 		me.mouseDownAction_({
-			if( ((count != 9) && (count != 11)),{a = Synth(\ring, [\freq,70+(50*me.string.asInteger)])})
+			if( ((count != 9) && (count != 11)),{a = Synth(\ring, [\freq,440+(100*me.string.asInteger)])})
 		})
 		.action_({
 			arg me;
@@ -168,11 +185,12 @@ buttonArray.do({
 			if( (number.size>0),
 				{
 					playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);
-					jingleButton.states_([["PLAY JINGLE", Color.black],["STOP JINGLE",Color.white, Color.red]]);
+					signalButton.states_([["SINE", Color.black],["SAW",Color.red],["TRI",Color.new255(100,200,100)]]);
+					signalButton.value_(wave);
 				},
 				{
-					playButton.states_([["", Color.black],["", Color.black]]);
-					jingleButton.states_([["", Color.black],["",Color.white]]);
+					playButton.states_(["", Color.black,Color.new255(100,100,100)]);
+					signalButton.states_(["", Color.black,Color.new255(100,100,100)]);
 				}
 			);
 		});
@@ -181,7 +199,7 @@ buttonArray.do({
 playButton.action_({
 		arg me;
 		//Setup of variables //
-		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1;
+		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1, myWave;
 		var notesArray = Array.newClear(number.size);
 
 		//Setup of the plots//
@@ -195,6 +213,8 @@ playButton.action_({
 
 				//Setup of the number of knobs (they depend by the size of the phone number)//
 				numKnob = number.size;
+				//Setup of the wave to generate//
+				myWave = wave;
 
 				//Setup of the additive Window //
 				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,70*numKnob + 50))
@@ -214,6 +234,23 @@ playButton.action_({
 				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
+				//Setup of knobs
+				knobMatrix.do({
+				arg me,count;
+
+				me.at(0,count).set(spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
+						\lin,10,f.value(count,number[count])),initVal:f.value(count,number[count]));
+
+				me.at(1,count).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
+
+				me.at(2,count).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
+
+				me.at(3,count).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+
+				me.at(4,count).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+
+				});
+
 				//Definition of the states of the start and stop buttons
 				buttonsWave.do({
 					arg me, index;
@@ -228,20 +265,14 @@ playButton.action_({
 					arg me, index;
 					me.action = {
 						arg state;
+
 						case
 						{state.value == 1}
-						//Start the sound
-						{
-							/*
-							notesArray[index] = Synth(\addsynth, [
-								\fund,f.value(index,number[index]),
-								\amp, 0.1,
-								\att,  0.1,
-								\dec,  0.2,
-								\rel,  0.6]);
-						}
-						*/
-						notesArray[index] = Synth(\addSin,[
+					{
+
+						case
+						{myWave == 0}{
+							notesArray[index] = Synth(\addSin,[
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
@@ -249,38 +280,73 @@ playButton.action_({
 								\totalAmp, 1/number.size,
 								\vel, 1,
 								\fc, 20000
-						]);}
+						]);
+						}
+						{myWave == 1}{
+							notesArray[index] = Synth(\addSaw,[
+								\fund,f.value(index,number[index]),
+								\ampHz, 1,
+								\maxPartial, 1,
+								\width, number[index],
+								\totalAmp, 1/number.size,
+								\vel, 1,
+								\fc, 20000
+						]);
+						}
+						{myWave ==2}{
+							notesArray[index] = Synth(\addTri,[
+								\fund,f.value(index,number[index]),
+								\ampHz, 1,
+								\maxPartial, 1,
+								\width, number[index],
+								\totalAmp, 1/number.size,
+								\vel, 1,
+								\fc, 20000
+						]);
+						};
 
+					}
 
 						{state.value == 0}
 						//Stop the sound
-						{notesArray[index].free; /*Maybe not the best way, but it works*/}
+						{
+							notesArray[index].free;
+							//Start to setting value
+							knobMatrix.do({
+								arg me,count;
+								if(count==index,
+									{
+										me.at(0,count).set(
+											spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
+												\lin,10,f.value(count,number[count])),
+											initVal:f.value(count,number[count]));
+										me.at(1).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
+										me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
+										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+										me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+								});
+							});
+
+						}
 					}
 				});
 
 				knobMatrix.do({
 					arg me, count;
 					//Frequency range//
-					me.at(0,count).set(
-						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
-						initVal:f.value(count,number[count]));
+
 					me.at(0,count).action_({arg me;
 						notesArray[count].set(\fund, me.value;)});
 
 					//Amplitude//
-					me.at(1,count).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
+
 					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
 
-					me.at(2,count).set(spec:ControlSpec(0,20000,\lin,10,20000), initVal:20000);
 					me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
 
-					me.at(3,count).set(spec:ControlSpec(0,10,\lin,0.1,1), initVal:1);
 					me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
 
-					me.at(4,count).set(spec:ControlSpec(0,10,\lin,1,1), initVal:1);
 					me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
-
-
 
 				});
 
