@@ -50,13 +50,13 @@ SynthDef.new(\addSin, {
 f = {
 		arg index, number;
 		o = case
-				{index==0}{2*130.8*pow(2,number/12)}//Do3
-				{index==1}{2*146.8*pow(2,number/12)}//Re3
-				{index==2}{2*164.8*pow(2,number/12)}//Mi3
-				{index==3}{2*174.6*pow(2,number/12)}//Fa3
-				{index==4}{2*196*pow(2,number/12)}//Sol3
-				{index==5}{2*220*pow(2,number/12)}//La3
-				{index==6}{2*246.9*pow(2,number/12)}//Si3
+				{index==0}{4*130.8*pow(2,number/12)}//Do3
+				{index==1}{4*146.8*pow(2,number/12)}//Re3
+				{index==2}{4*164.8*pow(2,number/12)}//Mi3
+				{index==3}{4*174.6*pow(2,number/12)}//Fa3
+				{index==4}{4*196*pow(2,number/12)}//Sol3
+				{index==5}{4*220*pow(2,number/12)}//La3
+				{index==6}{4*246.9*pow(2,number/12)}//Si3
 };
 
 
@@ -265,29 +265,22 @@ playButton.action_({
 						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
 						initVal:f.value(count,number[count]));
 					me.at(0,count).action_({arg me;
-						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
+						notesArray[count].set(\fund, me.value;)});
 
 					//Amplitude//
-					me.at(1,count).set(spec:ControlSpec(0.1,(1/number.size),\lin,0.1,(1/number.size)),initVal:1/number.size);
+					me.at(1,count).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
 					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
 
 					me.at(2,count).set(spec:ControlSpec(0,20000,\lin,10,20000), initVal:20000);
 					me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
 
-/*
-					me.at(3,count).set(
-						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
-						initVal:f.value(count,number[count]));
-					me.at(3,count).action_({arg me;count.postln;
-						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
+					me.at(3,count).set(spec:ControlSpec(0,10,\lin,0.1,1), initVal:1);
+					me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
+
+					me.at(4,count).set(spec:ControlSpec(0,10,\lin,1,1), initVal:1);
+					me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
 
 
-					me.at(4,count).set(
-						spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,\lin,10,f.value(count,number[count])),
-						initVal:f.value(count,number[count]));
-					me.at(4,count).action_({arg me;count.postln;
-						notesArray[count].set(\fund, f.value(count,number[count]) + me.value;)});
-					*/
 
 				});
 
