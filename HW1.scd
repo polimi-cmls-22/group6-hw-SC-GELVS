@@ -1,11 +1,32 @@
 /*
+*************************************************************************************************************************************
+--Company: Politecnico di Milano
+--Course name: Computer Music - Languages and Systems
+--Module name: Homework 1
+--Assignement: #1
+--Project name: Fourier's phone: Additive Synthesis Demo (GUI)
+--Group ID: 6
+--Group nickname: GELVS
+--Engineers:
+            Perego Gabriele
+            Roncuzzi Enrico
+            Di lLerico Letizia
+            Negroni Viola
+            Del Moro Samuele
+--Description:
+If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
+In this assignement we created a demo prototype of additive synthesis in the form of a mobile phone able to generate
+a series of up to 7 harmonic components that can be modulated and modified in real time.
+The pattern used to create the components of the additive synthesis is the following:
+The "telephone number" entered corresponds to an array in which: the i-th position corresponds to the i-th note of the C major scale
+and the entered value corresponds to the number of semitones to add to the corresponding note.
+Examples:
+[0,0,0,0,0] = C-D-E-F-G
+[0,1,2,3] = C-D#-E##-F### = C-D#-F#-G#
+In the phase in which the signals are generated, it is possible to start them individually, or simultaneously,
+and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
 
-TODO
-1- Comment the code
-2- Other debug
-3- Write report
-4-Write names
-
+*************************************************************************************************************************************
 */
 s.waitForBoot({
 
@@ -65,13 +86,13 @@ SynthDef.new(\addTri, {
 f = {
 		arg index, number;
 		o = case
-				{index==0}{4*130.8*pow(2,number/12)}//Do3
-				{index==1}{4*146.8*pow(2,number/12)}//Re3
-				{index==2}{4*164.8*pow(2,number/12)}//Mi3
-				{index==3}{4*174.6*pow(2,number/12)}//Fa3
-				{index==4}{4*196*pow(2,number/12)}//Sol3
-				{index==5}{4*220*pow(2,number/12)}//La3
-				{index==6}{4*246.9*pow(2,number/12)}//Si3
+				{index==0}{2*130.8*pow(2,number/12)}//Do3
+				{index==1}{2*146.8*pow(2,number/12)}//Re3
+				{index==2}{2*164.8*pow(2,number/12)}//Mi3
+				{index==3}{2*174.6*pow(2,number/12)}//Fa3
+				{index==4}{2*196*pow(2,number/12)}//Sol3
+				{index==5}{2*220*pow(2,number/12)}//La3
+				{index==6}{2*246.9*pow(2,number/12)}//Si3
 };
 
 
@@ -237,18 +258,10 @@ playButton.action_({
 				//Setup of knobs
 				knobMatrix.do({
 				arg me,count;
-
-				me.at(0,count).set(spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
-						\lin,10,f.value(count,number[count])),initVal:f.value(count,number[count]));
-
-				me.at(1,count).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
-
-				me.at(2,count).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
-
-				me.at(3,count).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
-
-				me.at(4,count).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
-
+					for(0,4){
+						arg i;
+						me.at(i,count).enabled_(false);
+					}
 				});
 
 				//Definition of the states of the start and stop buttons
@@ -265,6 +278,21 @@ playButton.action_({
 					arg me, index;
 					me.action = {
 						arg state;
+						knobMatrix.do({
+								arg me,count;
+								if(count==index,
+									{
+									for(0,4){arg i;me.at(i,count).enabled_(true);};
+										me.at(0,count).set(
+											spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
+												\lin,10,f.value(count,number[count])),
+											initVal:f.value(count,number[count]));
+										me.at(1).set(spec:ControlSpec(0.1,1,\lin,0.05,(1/number.size)),initVal:1/number.size);
+										me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
+										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+										me.at(4).set(spec:ControlSpec(1,20,\lin,1,1),initVal:1);
+								});
+							});
 
 						case
 						{state.value == 1}
@@ -316,14 +344,7 @@ playButton.action_({
 								arg me,count;
 								if(count==index,
 									{
-										me.at(0,count).set(
-											spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
-												\lin,10,f.value(count,number[count])),
-											initVal:f.value(count,number[count]));
-										me.at(1).set(spec:ControlSpec(0.1,1,\lin,0.1,(1/number.size)),initVal:1/number.size);
-										me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
-										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
-										me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+										for(0,4){arg i;me.at(i,count).enabled_(false);}
 								});
 							});
 
