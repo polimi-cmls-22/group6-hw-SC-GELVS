@@ -16,7 +16,7 @@
 --Description:
 If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
 In this assignement we created a demo prototype of additive synthesis in the form of a mobile phone able to generate
-a series of up to 7 harmonic components that can be modulated and modified in real time.
+a series of up to 7 components, that can be modulated and modified in real time, for create a ringtone jingle.
 The pattern used to create the components of the additive synthesis is the following:
 The "telephone number" entered corresponds to an array in which: the i-th position corresponds to the i-th note of the C major scale
 and the entered value corresponds to the number of semitones to add to the corresponding note.
@@ -28,6 +28,8 @@ and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
 
 *************************************************************************************************************************************
 */
+
+/*Start the server*/
 s.waitForBoot({
 
 /*Setup of  variables */
@@ -40,15 +42,17 @@ Window.closeAll;
 GUI.current;
 
 /*Setup of SyntDef*/
+
+//SynthDef for play sound out of the buttons
 SynthDef(\ring, {
 	arg freq = 440, amp = 0.1;
 	var env, snd;
 	snd = EnvGen.kr(Env.new([1,0.7,0.8,0],[0.1,0.1,0.2,0.1]), doneAction: 2) * LFPulse.ar(freq,0,mul:0.3);
 	Out.ar(0, snd*0.5);
 	Out.ar(1, snd*0.5);
-	}
-).add;
+	}).add;
 
+//SynthDef for generate SinOsc wave
 SynthDef.new(\addSin, {
 		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
 		var amp,sig,freq;
@@ -60,17 +64,19 @@ SynthDef.new(\addSin, {
 		Out.ar(1, sig);
 	}).add;
 
+//SynthDef for generate  LFSaw wave
 SynthDef.new(\addSaw, {
 		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
 		var amp,sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-		sig = SinOsc.ar(freq,0, amp);
+		sig = LFSaw.ar(freq,0, amp);
 		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
 
+//SynthDef for generate  LFTri wave
 SynthDef.new(\addTri, {
 		arg ampHz=10, fund=440, maxPartial=4,totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
 		var amp, sig,freq;
@@ -83,6 +89,8 @@ SynthDef.new(\addTri, {
 	}).add;
 
 /*Setup of Functions*/
+
+//Function for choose the correct note
 f = {
 		arg index, number;
 		o = case
@@ -95,8 +103,7 @@ f = {
 				{index==6}{2*246.9*pow(2,number/12)}//Si3
 };
 
-
-//Funzione che stampa il numero di telefono nello schermo
+//Function that prints the phone number on the screen
 funPrintText = {
 		arg numberToPrint,viewPrint;
 		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
@@ -107,7 +114,7 @@ funPrintText = {
 		.front;
 	};
 
-//Funzione che stampa staticamente il nome delle variabili delle sinusoidi
+//Function that prints the name of the variable parameters of the waves
 funPrintKnobText = {
 		arg viewPrint;
 		TextView(viewPrint,Rect(0,0,400,30))
@@ -134,24 +141,24 @@ mainWindow.onClose = {
 };
 CmdPeriod.doOnce({mainWindow.close});
 
-//Phone//
+/*Phone*/
 phone = CompositeView.new(mainWindow,Rect(10,10,mainWindow.bounds.width - 20,mainWindow.bounds.height - 20))
 	.background_(Color.grey);
 StaticText.new(phone,Rect(phone.bounds.width/4,0,300,100)).string_("NOCHIA 2022").font_(Font("Artifakt Element Light",40));
 
-//Phone screen//
+/*Phone screen*/
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
 
-//INITIALIZATION OF THE PHONE NUMBER LINE//
+/*INITIALIZATION OF THE PHONE NUMBER LINE*/
 funPrintText.value(number,phoneScreen);
 
 
-//Setup of the view of the phone//
+/*Setup of the view of the phone*/
 phoneControl = CompositeView.new(phone,Rect(40,300,400,70)).background_(Color.new255(50,50,50));
 phoneKeyboard = CompositeView.new(phone,Rect(40,370,400,250)).background_(Color.black);
 phoneKeyboard.decorator = FlowLayout(phoneKeyboard.bounds, margin: 40@20, gap: 5@5 );
 
-//Setup of the buttons of the phone//
+/*Setup of the buttons of the phone*/
 playButton = Button(phoneControl, Rect(40,10,100,50)).font_(Font("Artifakt Element Light",10))
 	.states_([
 		["", Color.black,Color.new255(100,100,100)]])
@@ -167,7 +174,6 @@ signalButton.action_({arg me; wave = me.value;});
 
 buttonArray = Array.fill(12, {Button(phoneKeyboard, 100@50)});
 
-/* Setup Actions of Buttons */
 buttonArray.do({
 		arg me, count;
 		me.states = [
@@ -178,7 +184,9 @@ buttonArray.do({
 		if(count == 10, {me.states = [["0"]]});
 		if(count == 11, {me.states = [["#"]]});
 		me.font_(Font("Artifakt Element Light",20));
-});//End of buttonarray.do
+});
+
+/* Setup Actions of Buttons */
 
 buttonArray.do({
 		arg me, count;
@@ -215,47 +223,47 @@ buttonArray.do({
 				}
 			);
 		});
-});//End of buttonArray.do.action
+});
 
 playButton.action_({
 		arg me;
-		//Setup of variables //
+		/*Setup of variables */
 		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1, myWave;
 		var notesArray = Array.newClear(number.size);
 
-		//Setup of the plots//
+		/*Setup of the plots*/
 		s.freqscope;
 		s.scope;
 
 		if((me.value == 1) && (number.size > 0),
 			{
-				//Make the phone invisible//
+				/*Make the phone invisible*/
 				mainWindow.visible_(false);
 
-				//Setup of the number of knobs (they depend by the size of the phone number)//
+				/*Setup of the number of knobs (they depend by the size of the phone number)*/
 				numKnob = number.size;
-				//Setup of the wave to generate//
+				/*Setup of the wave to generate*/
 				myWave = wave;
 
-				//Setup of the additive Window //
+				/*Setup of the additive Window */
 				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
 
-				//Setup of the display that contains the knobs //
+				/*Setup of the display that contains the knobs */
 				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,70*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
 				knobMatrix = Array.fill2D(numKnob,5, {EZKnob(displayKnobs,50@60)});
 
-				//Setup of the display that contains the buttons for start and stop sound//
+				/*Setup of the display that contains the buttons for start and stop sound*/
 				displayButtons = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
 				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
-				//Setup of knobs
+				/*Setup of knobs */
 				knobMatrix.do({
 				arg me,count;
 					for(0,4){
@@ -283,69 +291,72 @@ playButton.action_({
 								if(count==index,
 									{
 									for(0,4){arg i;me.at(i,count).enabled_(true);};
+
+									/*Frequency*/
 										me.at(0,count).set(
 											spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
 												\lin,10,f.value(count,number[count])),
 											initVal:f.value(count,number[count]));
-										me.at(1).set(spec:ControlSpec(0.1,1,\lin,0.05,(1/number.size)),initVal:1/number.size);
-										//me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);--Cutoff
+									/*Amplitude*/
+										me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
+
+									/*Cutoff*/
+									//me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
+
+									/*Speed*/
 									    me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
-										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,0),initVal:0);
-										me.at(4).set(spec:ControlSpec(1,20,\lin,1,1),initVal:1);
+
+									/*AmpHz*/
+										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+
+									/*maxPartial*/
+										me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
 								});
 							});
 
 						case
+						//If the button is pressed: start to play
 						{state.value == 1}
-					{
-
+						{
 						case
+						//Generate SinOsc
 						{myWave == 0}{
 							notesArray[index] = Synth(\addSin,[
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\totalAmp, 1/number.size,
+								\totalAmp, 0.5,
 								\vel, 1,
 								\fc, 20000
-						]);
-						}
+						]);}
+						//Generate LFSaw
 						{myWave == 1}{
 							notesArray[index] = Synth(\addSaw,[
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\totalAmp, 1/number.size,
+								\totalAmp, 0.5,
 								\vel, 1,
 								\fc, 20000
-						]);
-						}
+						]);}
+						//Generate LFTri
 						{myWave ==2}{
 							notesArray[index] = Synth(\addTri,[
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\totalAmp, 1/number.size,
+								\totalAmp, 0.5,
 								\vel, 1,
 								\fc, 20000
-						]);
-						};
-
-					}
-
+						]);};
+						}
+                        //Button off
 						{state.value == 0}
 						//Stop the sound
 						{
 							notesArray[index].free;
-							//Start to setting value
-							knobMatrix.do({
-								arg me,count;
-								if(count==index,
-									{
-										for(0,4){arg i;me.at(i,count).enabled_(false);}
-								});
-							});
-
+							//Set the know not enabled
+							knobMatrix.do({arg me,count;if(count==index,{for(0,4){arg i;me.at(i,count).enabled_(false);}});});
 						}
 					}
 				});
@@ -353,20 +364,21 @@ playButton.action_({
 				knobMatrix.do({
 					arg me, count;
 					//Frequency range//
-
-					me.at(0,count).action_({arg me;
-						notesArray[count].set(\fund, me.value;)});
+					me.at(0,count).action_({arg me;notesArray[count].set(\fund, me.value;)});
 
 					//Amplitude//
-
 					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
 
+					//Cutoff//
 					//me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
 
+					//Speed of the ringtone//
 					me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value;)});
 
+					//Value of ampHz//
 					me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
 
+					//Value of the range of the tones//
 					me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
 
 				});
@@ -387,6 +399,7 @@ playButton.action_({
 
 "Additive Synthesis Demo Starts".postln;
 
-});//End of the code
+});
+//End of the code
 
 
