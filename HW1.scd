@@ -50,33 +50,33 @@ SynthDef(\ring, {
 ).add;
 
 SynthDef.new(\addSin, {
-		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
-		var amp, sig,freq, sen;
+		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
+		var amp,sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-		sig = SinOsc.ar(freq, width, amp);
+		sig = SinOsc.ar(freq,0, amp);
 		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
 
 SynthDef.new(\addSaw, {
-		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
-		var amp, sig,freq, sen;
+		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
+		var amp,sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-		sig = LFSaw.ar(freq, width, amp);
+		sig = SinOsc.ar(freq,0, amp);
 		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
 
 SynthDef.new(\addTri, {
-		arg ampHz=10, fund=440, maxPartial=4, width=5, totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
-		var amp, sig,freq, sen;
+		arg ampHz=10, fund=440, maxPartial=4,totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
+		var amp, sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-	    sig = LFTri.ar(freq,width,amp);
+	    sig = LFTri.ar(freq,0,amp);
 		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
@@ -111,7 +111,7 @@ funPrintText = {
 funPrintKnobText = {
 		arg viewPrint;
 		TextView(viewPrint,Rect(0,0,400,30))
-		.string_("Freq            Amp        Cutoff      AmpHz       Jingle")
+		.string_("Freq           Amp        Speed     AmpHz      Range")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
 		.front;
@@ -288,8 +288,9 @@ playButton.action_({
 												\lin,10,f.value(count,number[count])),
 											initVal:f.value(count,number[count]));
 										me.at(1).set(spec:ControlSpec(0.1,1,\lin,0.05,(1/number.size)),initVal:1/number.size);
-										me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
-										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+										//me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);--Cutoff
+									    me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,0),initVal:0);
 										me.at(4).set(spec:ControlSpec(1,20,\lin,1,1),initVal:1);
 								});
 							});
@@ -304,7 +305,6 @@ playButton.action_({
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\width, number[index],
 								\totalAmp, 1/number.size,
 								\vel, 1,
 								\fc, 20000
@@ -315,7 +315,6 @@ playButton.action_({
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\width, number[index],
 								\totalAmp, 1/number.size,
 								\vel, 1,
 								\fc, 20000
@@ -326,7 +325,6 @@ playButton.action_({
 								\fund,f.value(index,number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
-								\width, number[index],
 								\totalAmp, 1/number.size,
 								\vel, 1,
 								\fc, 20000
@@ -363,7 +361,9 @@ playButton.action_({
 
 					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
 
-					me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
+					//me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
+
+					me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value;)});
 
 					me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
 
