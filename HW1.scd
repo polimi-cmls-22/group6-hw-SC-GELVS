@@ -101,18 +101,18 @@ g = {
 		for(0,arrayInput.size,{
 		arg i;
 		case
-		{arrayInput[i]==0}{arrayOutput.add("C")}
-		{arrayInput[i]==1}{arrayOutput.add("C#")}
-		{arrayInput[i]==2}{arrayOutput.add("D")}
-		{arrayInput[i]==3}{arrayOutput.add("D#")}
-		{arrayInput[i]==4}{arrayOutput.add("E")}
-		{arrayInput[i]==5}{arrayOutput.add("F")}
-		{arrayInput[i]==6}{arrayOutput.add("F#")}
-		{arrayInput[i]==7}{arrayOutput.add("G")}
-		{arrayInput[i]==8}{arrayOutput.add("G#")}
-		{arrayInput[i]==9}{arrayOutput.add("A")}
-		{arrayInput[i]==10}{arrayOutput.add("A#")}
-		{arrayInput[i]==11}{arrayOutput.add("B")}
+		{arrayInput[i]==1}{arrayOutput.add("C")}
+		{arrayInput[i]==2}{arrayOutput.add("C#")}
+		{arrayInput[i]==3}{arrayOutput.add("D")}
+		{arrayInput[i]==4}{arrayOutput.add("D#")}
+		{arrayInput[i]==5}{arrayOutput.add("E")}
+		{arrayInput[i]==6}{arrayOutput.add("F")}
+		{arrayInput[i]==7}{arrayOutput.add("F#")}
+		{arrayInput[i]==8}{arrayOutput.add("G")}
+		{arrayInput[i]==9}{arrayOutput.add("G#")}
+		{arrayInput[i]==10}{arrayOutput.add("A")}
+		{arrayInput[i]==11}{arrayOutput.add("A#")}
+		{arrayInput[i]==12}{arrayOutput.add("B")}
 		});
 	    o = arrayOutput.asArray;
 };
@@ -122,6 +122,14 @@ funPrintText = {
 		arg arrayNumber,viewPrint;
 		var stringNumber;
 		stringNumber = g.value(arrayNumber);
+
+		TextView(viewPrint,Rect(0,0,viewPrint.bounds.width, viewPrint.bounds.height))
+		.string_(arrayNumber.asString)
+		.editable_(false)
+		.font_(Font("Artifakt Element Light",34))
+		.background_(Color.cyan)
+		.front;
+
 		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
 		.string_(stringNumber.asString)
 		.editable_(false)
@@ -225,7 +233,7 @@ buttonArray.do({
 			arg me;
 			playButton.value_(0);
 			if(counterNumbers < 7,{
-				number.add(count);
+				number.add(count+1);
 				funPrintText.value(number,phoneScreen);
 				counterNumbers = counterNumbers+1;
 				counterNumbers.postln;
