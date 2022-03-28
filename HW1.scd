@@ -10,7 +10,7 @@
 --Engineers:
             Perego Gabriele
             Roncuzzi Enrico
-            Di lLerico Letizia
+            Di Clerico Letizia
             Negroni Viola
             Del Moro Samuele
 --Description:
@@ -33,7 +33,7 @@ and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
 s.waitForBoot({
 
 /*Setup of  variables */
-var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, signalButton;
+var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, cancelButton;
 var funPrintText, funPrintKnobText, funNote;
 var space = 0, counterNumbers = 0, wave=0;
 var number = Array.new(10);
@@ -92,22 +92,38 @@ SynthDef.new(\addTri, {
 
 //Function for choose the correct note
 f = {
-		arg index, number;
-		o = case
-				{index==0}{2*130.8*pow(2,number/12)}//Do3
-				{index==1}{2*146.8*pow(2,number/12)}//Re3
-				{index==2}{2*164.8*pow(2,number/12)}//Mi3
-				{index==3}{2*174.6*pow(2,number/12)}//Fa3
-				{index==4}{2*196*pow(2,number/12)}//Sol3
-				{index==5}{2*220*pow(2,number/12)}//La3
-				{index==6}{2*246.9*pow(2,number/12)}//Si3
+		arg index;
+		o  = 261.6*pow(2,index/12);
+};
+g = {
+		arg arrayInput;
+	    var arrayOutput = List.new(arrayInput.size);
+		for(0,arrayInput.size,{
+		arg i;
+		case
+		{arrayInput[i]==0}{arrayOutput.add("C")}
+		{arrayInput[i]==1}{arrayOutput.add("C#")}
+		{arrayInput[i]==2}{arrayOutput.add("D")}
+		{arrayInput[i]==3}{arrayOutput.add("D#")}
+		{arrayInput[i]==4}{arrayOutput.add("E")}
+		{arrayInput[i]==5}{arrayOutput.add("F")}
+		{arrayInput[i]==6}{arrayOutput.add("F#")}
+		{arrayInput[i]==7}{arrayOutput.add("G")}
+		{arrayInput[i]==8}{arrayOutput.add("G#")}
+		{arrayInput[i]==9}{arrayOutput.add("A")}
+		{arrayInput[i]==10}{arrayOutput.add("A#")}
+		{arrayInput[i]==11}{arrayOutput.add("B")}
+		});
+	    o = arrayOutput.asArray;
 };
 
 //Function that prints the phone number on the screen
 funPrintText = {
-		arg numberToPrint,viewPrint;
+		arg arrayNumber,viewPrint;
+		var stringNumber;
+		stringNumber = g.value(arrayNumber);
 		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
-		.string_(numberToPrint.asString)
+		.string_(stringNumber.asString)
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",34))
 		.background_(Color.cyan)
@@ -144,7 +160,7 @@ CmdPeriod.doOnce({mainWindow.close});
 /*Phone*/
 phone = CompositeView.new(mainWindow,Rect(10,10,mainWindow.bounds.width - 20,mainWindow.bounds.height - 20))
 	.background_(Color.grey);
-StaticText.new(phone,Rect(phone.bounds.width/4,0,300,100)).string_("NOCHIA 2022").font_(Font("Artifakt Element Light",40));
+	StaticText.new(phone,Rect(70,0,500,100)).string_("FOURIER'S PHONE 2022").font_(Font("Artifakt Element Light",30));
 
 /*Phone screen*/
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
@@ -164,13 +180,27 @@ playButton = Button(phoneControl, Rect(40,10,100,50)).font_(Font("Artifakt Eleme
 		["", Color.black,Color.new255(100,100,100)]])
 	.font_(Font("Artifakt Element Light",15));
 
-signalButton = Button(phoneControl, Rect(250,10,100,50))
+cancelButton = Button(phoneControl, Rect(250,10,100,50))
 	.font_(Font("Artifakt Element Light",10))
 	.states_([
 		["", Color.black,Color.new255(100,100,100)]])
 	.font_(Font("Artifakt Element Light",15));
 
-signalButton.action_({arg me; wave = me.value;});
+cancelButton.action_({
+		if(counterNumbers > 0,{
+			counterNumbers = counterNumbers-1;
+			number.removeAt(counterNumbers);
+			funPrintText.value(number,phoneScreen);
+			counterNumbers.postln;
+			number.size.postln;
+		});
+		if( (number.size == 0),
+			{
+			playButton.states_([["", Color.black,Color.new255(100,100,100)]]);
+			cancelButton.states_([["", Color.black,Color.new255(100,100,100)]]);
+			}
+		);
+	});
 
 buttonArray = Array.fill(12, {Button(phoneKeyboard, 100@50)});
 
@@ -190,45 +220,31 @@ buttonArray.do({
 
 buttonArray.do({
 		arg me, count;
-		me.mouseDownAction_({
-			if( ((count != 9) && (count != 11)),{a = Synth(\ring, [\freq,440+(100*me.string.asInteger)])})
-		})
+		me.mouseDownAction_({a = Synth(\ring, [\freq,440])})
 		.action_({
 			arg me;
 			playButton.value_(0);
-			if( (counterNumbers < 7) && (me.string != "*") && (me.string != "#") ,
-				{
-				number.add(me.string.asInteger);
+			if(counterNumbers < 7,{
+				number.add(count);
 				funPrintText.value(number,phoneScreen);
 				counterNumbers = counterNumbers+1;
-				}
-			);
-			if( (me.string == "#")&&(counterNumbers>0),
-				{
-					counterNumbers = counterNumbers-1;
-					number.removeAt(counterNumbers);
-					funPrintText.value(number,phoneScreen);
-
-				}
-			);
-			if( (number.size>0),
+				counterNumbers.postln;
+				number.size.postln;
+			});
+			if(number.size > 0,
 				{
 					playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);
-					signalButton.states_([["SINE", Color.black],["SAW",Color.red],["TRI",Color.new255(100,200,100)]]);
-					signalButton.value_(wave);
-				},
-				{
-					playButton.states_(["", Color.black,Color.new255(100,100,100)]);
-					signalButton.states_(["", Color.black,Color.new255(100,100,100)]);
+					cancelButton.states_([["CANCEL", Color.black]]);
 				}
 			);
+
 		});
 });
 
 playButton.action_({
 		arg me;
 		/*Setup of variables */
-		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1, myWave;
+		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1, myWave=0;
 		var notesArray = Array.newClear(number.size);
 
 		/*Setup of the plots*/
@@ -242,8 +258,6 @@ playButton.action_({
 
 				/*Setup of the number of knobs (they depend by the size of the phone number)*/
 				numKnob = number.size;
-				/*Setup of the wave to generate*/
-				myWave = wave;
 
 				/*Setup of the additive Window */
 				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,70*numKnob + 50))
