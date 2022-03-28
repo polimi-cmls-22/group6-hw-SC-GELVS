@@ -1,3 +1,8 @@
+/*TODO
+Setting frequency
+Setting waves
+*/
+
 /*
 *************************************************************************************************************************************
 --Company: Politecnico di Milano
@@ -91,9 +96,27 @@ SynthDef.new(\addTri, {
 /*Setup of Functions*/
 
 //Function for choose the correct note
+e = {
+		arg num;
+		var note = "";
+		case
+		{num ==1}{note = "C"}
+	    {num==2}{note = "C#"}
+		{num==3}{note = "D"}
+		{num==4}{note = "D#"}
+		{num==5}{note = "E"}
+		{num==6}{note = "F"}
+		{num==7}{note = "F#"}
+		{num==8}{note = "G"}
+		{num==9}{note = "G#"}
+		{num==10}{note = "A"}
+		{num==11}{note = "A#"}
+		{num==12}{note = "B"};
+	    o = note;
+};
 f = {
-		arg index;
-		o  = 261.6*pow(2,index/12);
+		arg val;
+		o  = 261.6*pow(2,val/12);
 };
 g = {
 		arg arrayInput;
@@ -116,24 +139,46 @@ g = {
 		});
 	    o = arrayOutput.asArray;
 };
+h = {
+		arg arrayInput;
+	    var arrayOutput = List.new(arrayInput.size);
+		for(0,arrayInput.size,{
+		arg i;
+		case
+		{arrayInput[i]==1}{arrayOutput.add("1")}
+		{arrayInput[i]==2}{arrayOutput.add("2")}
+		{arrayInput[i]==3}{arrayOutput.add("3")}
+		{arrayInput[i]==4}{arrayOutput.add("4")}
+		{arrayInput[i]==5}{arrayOutput.add("5")}
+		{arrayInput[i]==6}{arrayOutput.add("6")}
+		{arrayInput[i]==7}{arrayOutput.add("7")}
+		{arrayInput[i]==8}{arrayOutput.add("8")}
+		{arrayInput[i]==9}{arrayOutput.add("9")}
+		{arrayInput[i]==10}{arrayOutput.add("*")}
+		{arrayInput[i]==11}{arrayOutput.add("0")}
+			{arrayInput[i]==12}{arrayOutput.add("#")}
+		});
+	    o = arrayOutput.asArray;
+};
 
 //Function that prints the phone number on the screen
 funPrintText = {
 		arg arrayNumber,viewPrint;
-		var stringNumber;
+		var stringNumber, phoneNumber;
 		stringNumber = g.value(arrayNumber);
+		phoneNumber = h.value(arrayNumber);
 
-		TextView(viewPrint,Rect(0,0,viewPrint.bounds.width, viewPrint.bounds.height))
-		.string_(arrayNumber.asString)
+		TextView(viewPrint,Rect(0,30,viewPrint.bounds.width, 70))
+		.string_(phoneNumber.asString)
 		.editable_(false)
-		.font_(Font("Artifakt Element Light",34))
+		.font_(Font("Artifakt Element Light",40))
 		.background_(Color.cyan)
 		.front;
 
-		TextView(viewPrint,Rect(0,viewPrint.bounds.top/2 +25,viewPrint.bounds.width, viewPrint.bounds.height))
+		TextView(viewPrint,Rect(0,100,viewPrint.bounds.width, 60))
 		.string_(stringNumber.asString)
 		.editable_(false)
-		.font_(Font("Artifakt Element Light",34))
+		.font_(Font("Artifakt Element Light",30))
 		.background_(Color.cyan)
 		.front;
 	};
@@ -172,6 +217,10 @@ phone = CompositeView.new(mainWindow,Rect(10,10,mainWindow.bounds.width - 20,mai
 
 /*Phone screen*/
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
+StaticText.new(phoneScreen,Rect(0,0,400,40)).string_("NUMBER ENTERED").font_(Font("Artifakt Element Light",20))
+	.background_(Color.new255(200,200,200));
+StaticText.new(phoneScreen,Rect(0,160,400,40)).string_("NOTES ENTERED").font_(Font("Artifakt Element Light",20))
+	.background_(Color.new255(200,200,200));
 
 /*INITIALIZATION OF THE PHONE NUMBER LINE*/
 funPrintText.value(number,phoneScreen);
@@ -199,8 +248,6 @@ cancelButton.action_({
 			counterNumbers = counterNumbers-1;
 			number.removeAt(counterNumbers);
 			funPrintText.value(number,phoneScreen);
-			counterNumbers.postln;
-			number.size.postln;
 		});
 		if( (number.size == 0),
 			{
@@ -228,7 +275,7 @@ buttonArray.do({
 
 buttonArray.do({
 		arg me, count;
-		me.mouseDownAction_({a = Synth(\ring, [\freq,440])})
+		me.mouseDownAction_({a = Synth(\ring, [\freq,f.value(count+1)])})
 		.action_({
 			arg me;
 			playButton.value_(0);
@@ -236,13 +283,11 @@ buttonArray.do({
 				number.add(count+1);
 				funPrintText.value(number,phoneScreen);
 				counterNumbers = counterNumbers+1;
-				counterNumbers.postln;
-				number.size.postln;
 			});
 			if(number.size > 0,
 				{
 					playButton.states_([["PLAY", Color.black,Color.green],["PLAY", Color.black,Color.red]]);
-					cancelButton.states_([["CANCEL", Color.black]]);
+					cancelButton.states_([["CANCEL", Color.black, Color.new255(255,100,100)]]);
 				}
 			);
 
@@ -298,8 +343,8 @@ playButton.action_({
 				buttonsWave.do({
 					arg me, index;
 					me.states = [
-						[number[index].asString, Color.black],
-						[number[index].asString, Color.black, Color.green]
+					[e.value(number[index]).asString, Color.black],
+					[e.value(number[index]).asString, Color.black, Color.green]
 					]
 				});
 
@@ -340,37 +385,17 @@ playButton.action_({
 						//If the button is pressed: start to play
 						{state.value == 1}
 						{
-						case
 						//Generate SinOsc
-						{myWave == 0}{
+							number[index].postln;
 							notesArray[index] = Synth(\addSin,[
-								\fund,f.value(index,number[index]),
+								//TO FIX THIS PART!!!
+								\fund,f.value(number[index]),
 								\ampHz, 1,
 								\maxPartial, 1,
 								\totalAmp, 0.5,
 								\vel, 1,
 								\fc, 20000
-						]);}
-						//Generate LFSaw
-						{myWave == 1}{
-							notesArray[index] = Synth(\addSaw,[
-								\fund,f.value(index,number[index]),
-								\ampHz, 1,
-								\maxPartial, 1,
-								\totalAmp, 0.5,
-								\vel, 1,
-								\fc, 20000
-						]);}
-						//Generate LFTri
-						{myWave ==2}{
-							notesArray[index] = Synth(\addTri,[
-								\fund,f.value(index,number[index]),
-								\ampHz, 1,
-								\maxPartial, 1,
-								\totalAmp, 0.5,
-								\vel, 1,
-								\fc, 20000
-						]);};
+						]);
 						}
                         //Button off
 						{state.value == 0}
