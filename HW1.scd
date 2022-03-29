@@ -1,6 +1,5 @@
 /*TODO
-Setting frequency
-Setting waves
+Setting different waves
 */
 
 /*
@@ -21,13 +20,8 @@ Setting waves
 --Description:
 If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
 In this assignement we created a demo prototype of additive synthesis in the form of a mobile phone able to generate
-a series of up to 7 components, that can be modulated and modified in real time, for create a ringtone jingle.
-The pattern used to create the components of the additive synthesis is the following:
-The "telephone number" entered corresponds to an array in which: the i-th position corresponds to the i-th note of the C major scale
-and the entered value corresponds to the number of semitones to add to the corresponding note.
-Examples:
-[0,0,0,0,0] = C-D-E-F-G
-[0,1,2,3] = C-D#-E##-F### = C-D#-F#-G#
+a series of components, that can be modulated and modified in real time, for create a ringtone jingle.
+Each button of the phone represents a musical note and you can enter from 1 up to 7 numbers to create a bank of, up to 7 , signals.
 In the phase in which the signals are generated, it is possible to start them individually, or simultaneously,
 and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
 
@@ -40,7 +34,7 @@ s.waitForBoot({
 /*Setup of  variables */
 var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, cancelButton;
 var funPrintText, funPrintKnobText, funNote;
-var space = 0, counterNumbers = 0, wave=0;
+var space = 0, counterNumbers = 0, wave=0, fundamentalNote = 261.60;
 var number = Array.new(10);
 
 Window.closeAll;
@@ -95,7 +89,7 @@ SynthDef.new(\addTri, {
 
 /*Setup of Functions*/
 
-//Function for choose the correct note
+//Function that convert the number pressed to a musical note string
 e = {
 		arg num;
 		var note = "";
@@ -114,10 +108,13 @@ e = {
 		{num==12}{note = "B"};
 	    o = note;
 };
+
+//Function that given the number of the phone generate the corresponding musical note frequency
 f = {
 		arg val;
-		o  = 261.6*pow(2,val/12);
+		o  = fundamentalNote*pow(2,val/12);
 };
+//Function that given an input array of numbers generate the corresponding array of musical notes string
 g = {
 		arg arrayInput;
 	    var arrayOutput = List.new(arrayInput.size);
@@ -139,6 +136,7 @@ g = {
 		});
 	    o = arrayOutput.asArray;
 };
+//Function that given an input array of numbers generate the corresponding array phone numbers string
 h = {
 		arg arrayInput;
 	    var arrayOutput = List.new(arrayInput.size);
@@ -156,7 +154,7 @@ h = {
 		{arrayInput[i]==9}{arrayOutput.add("9")}
 		{arrayInput[i]==10}{arrayOutput.add("*")}
 		{arrayInput[i]==11}{arrayOutput.add("0")}
-			{arrayInput[i]==12}{arrayOutput.add("#")}
+		{arrayInput[i]==12}{arrayOutput.add("#")}
 		});
 	    o = arrayOutput.asArray;
 };
@@ -335,7 +333,17 @@ playButton.action_({
 				arg me,count;
 					for(0,4){
 						arg i;
-						me.at(i,count).enabled_(false);
+						/*Frequency*/
+						me.at(0,count).set(spec:ControlSpec(f.value(number[count]-1)-50, f.value(number[count]-1)+50,\lin,0.1,f.value(number[count]-1)),
+							initVal:f.value(number[count]-1));
+						/*Amplitude*/
+						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
+						/*Speed*/
+						me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						/*AmpHz*/
+						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+						/*maxPartial*/
+						me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
 					}
 				});
 
@@ -353,83 +361,50 @@ playButton.action_({
 					arg me, index;
 					me.action = {
 						arg state;
-						knobMatrix.do({
-								arg me,count;
-								if(count==index,
-									{
-									for(0,4){arg i;me.at(i,count).enabled_(true);};
-
-									/*Frequency*/
-										me.at(0,count).set(
-											spec:ControlSpec(f.value(count,number[count])-100, f.value(count,number[count])+100,
-												\lin,10,f.value(count,number[count])),
-											initVal:f.value(count,number[count]));
-									/*Amplitude*/
-										me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
-
-									/*Cutoff*/
-									//me.at(2).set(spec:ControlSpec(0,20000,\lin,10,20000),initVal:20000);
-
-									/*Speed*/
-									    me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
-
-									/*AmpHz*/
-										me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
-
-									/*maxPartial*/
-										me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
-								});
-							});
 
 						case
 						//If the button is pressed: start to play
 						{state.value == 1}
 						{
 						//Generate SinOsc
-							number[index].postln;
-							notesArray[index] = Synth(\addSin,[
-								//TO FIX THIS PART!!!
-								\fund,f.value(number[index]),
-								\ampHz, 1,
-								\maxPartial, 1,
-								\totalAmp, 0.5,
-								\vel, 1,
-								\fc, 20000
-						]);
+							knobMatrix.do({
+								arg knob,count;
+								if(count == index,
+									{
+										notesArray[index] = Synth(\addSin,[
+											\fund,knob.at(0,count).value,
+											\totalAmp,knob.at(1,count).value,
+											\vel, knob.at(2,count).value,
+											\ampHz,knob.at(3,count).value,
+											\maxPartial,knob.at(4,count).value,
+											\fc, 20000]);
+								});
+							});
+							knobMatrix.do({
+								arg me, count;
+								//Frequency range//
+								me.at(0,count).action_({arg me;notesArray[count].set(\fund, me.value;)});
+
+								//Amplitude//
+								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
+
+								//Speed of the ringtone//
+								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value;)});
+
+								//Value of ampHz//
+								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
+
+								//Value of the range of the tones//
+								me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
+
+							});
 						}
                         //Button off
 						{state.value == 0}
 						//Stop the sound
-						{
-							notesArray[index].free;
-							//Set the know not enabled
-							knobMatrix.do({arg me,count;if(count==index,{for(0,4){arg i;me.at(i,count).enabled_(false);}});});
-						}
+						{notesArray[index].free;}
 					}
 				});
-
-				knobMatrix.do({
-					arg me, count;
-					//Frequency range//
-					me.at(0,count).action_({arg me;notesArray[count].set(\fund, me.value;)});
-
-					//Amplitude//
-					me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
-
-					//Cutoff//
-					//me.at(2,count).action_({arg me;notesArray[count].set(\fc, me.value;)});
-
-					//Speed of the ringtone//
-					me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value;)});
-
-					//Value of ampHz//
-					me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
-
-					//Value of the range of the tones//
-					me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
-
-				});
-
 
 				/*Back to the phone*/
 				additiveWindow.onClose = {
