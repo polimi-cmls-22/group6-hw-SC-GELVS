@@ -1,5 +1,5 @@
 /*TODO
-Setting different waves
+Fix only buttons enabled
 */
 
 /*
@@ -21,7 +21,7 @@ Setting different waves
 If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
 In this assignement we created a demo prototype of additive synthesis in the form of a mobile phone able to generate
 a series of components, that can be modulated and modified in real time, for create a ringtone jingle.
-Each button of the phone represents a musical note and you can enter from 1 up to 7 numbers to create a bank of, up to 7 , signals.
+Each button of the phone represents a musical note and you can enter from 1 up to 7 numbers to create a bank of, up to 7,signals.
 In the phase in which the signals are generated, it is possible to start them individually, or simultaneously,
 and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
 
@@ -176,7 +176,7 @@ funPrintText = {
 		TextView(viewPrint,Rect(0,100,viewPrint.bounds.width, 60))
 		.string_(stringNumber.asString)
 		.editable_(false)
-		.font_(Font("Artifakt Element Light",30))
+		.font_(Font("Artifakt Element Light",25))
 		.background_(Color.cyan)
 		.front;
 	};
@@ -204,8 +204,10 @@ mainWindow = Window.new("Fourier's phone - Additive Synthesis",Rect(Window.scree
 /*CLOSE ALL AND STOP ALL*/
 mainWindow.onClose = {
 		Server.freeAll;
+		//Server.killAll;
 		"Bye Bye!".postln
 };
+
 CmdPeriod.doOnce({mainWindow.close});
 
 /*Phone*/
@@ -259,10 +261,7 @@ buttonArray = Array.fill(12, {Button(phoneKeyboard, 100@50)});
 
 buttonArray.do({
 		arg me, count;
-		me.states = [
-			[(count+1).asString, Color.black],
-			[(count+1).asString, Color.black]
-		];
+		me.states = [[(count+1).asString, Color.black],[(count+1).asString, Color.black]];
 		if(count == 9, {me.states_([["*"]])});
 		if(count == 10, {me.states = [["0"]]});
 		if(count == 11, {me.states = [["#"]]});
@@ -295,7 +294,8 @@ buttonArray.do({
 playButton.action_({
 		arg me;
 		/*Setup of variables */
-		var displayKnobs, displayButtons, knobMatrix, buttonsWave, numKnob = 1, myWave=0;
+		var displayKnobs, displayButtons, knobMatrix, buttonsWave, displayWaves, buttonsSignals;
+		var numKnob = 1, myWave=0;
 		var notesArray = Array.newClear(number.size);
 
 		/*Setup of the plots*/
@@ -311,7 +311,7 @@ playButton.action_({
 				numKnob = number.size;
 
 				/*Setup of the additive Window */
-				additiveWindow = Window.new("Additive Synthesis",Rect(1000,200,500,70*numKnob + 50))
+				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,600,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
@@ -328,13 +328,23 @@ playButton.action_({
 				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
-				/*Setup of knobs */
+				displayWaves = CompositeView.new(additiveWindow,
+					Rect(displayKnobs.bounds.width+displayButtons.bounds.width,0,120,70*numKnob + 50)).background_(Color.grey);
+				displayWaves.decorator = FlowLayout(displayWaves.bounds, margin:10@40,gap: 10@20);
+				buttonsSignals = Array.fill(numKnob,{Button(displayWaves, 100@50)});
+
+				buttonsSignals.do({
+					arg me;
+					me.states = [["SINE",Color.black],["SAW",Color.black,Color.red],["TRI",Color.black,Color.green]]});
+
+				/*Initialization of knobs */
 				knobMatrix.do({
 				arg me,count;
 					for(0,4){
 						arg i;
 						/*Frequency*/
-						me.at(0,count).set(spec:ControlSpec(f.value(number[count]-1)-50, f.value(number[count]-1)+50,\lin,0.1,f.value(number[count]-1)),
+						me.at(0,count).set(spec:ControlSpec(f.value(number[count]-1)-50, f.value(number[count]-1)+50,
+							\lin,0.1,f.value(number[count]-1)),
 							initVal:f.value(number[count]-1));
 						/*Amplitude*/
 						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
@@ -350,10 +360,7 @@ playButton.action_({
 				//Definition of the states of the start and stop buttons
 				buttonsWave.do({
 					arg me, index;
-					me.states = [
-					[e.value(number[index]).asString, Color.black],
-					[e.value(number[index]).asString, Color.black, Color.green]
-					]
+					me.states = [[e.value(number[index]).asString, Color.black],[e.value(number[index]).asString, Color.black, Color.green]];
 				});
 
 				//Definition of the action of the start and stop buttons
@@ -364,22 +371,48 @@ playButton.action_({
 
 						case
 						//If the button is pressed: start to play
-						{state.value == 1}
+						{(state.value == 1)}
 						{
 						//Generate SinOsc
+					        buttonsSignals[index].enabled_(false);
 							knobMatrix.do({
 								arg knob,count;
 								if(count == index,
 									{
-										notesArray[index] = Synth(\addSin,[
+										case
+										{buttonsSignals[index].value == 0}
+										{
+											//notesArray[index].free;
+											notesArray[index] = Synth(\addSin,[
 											\fund,knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
-											\maxPartial,knob.at(4,count).value,
-											\fc, 20000]);
+											\maxPartial,knob.at(4,count).value]);
+										}
+										{buttonsSignals[index].value == 1}
+										{
+											//notesArray[index].free;
+											notesArray[index] = Synth(\addSaw,[
+											\fund,knob.at(0,count).value,
+											\totalAmp,knob.at(1,count).value,
+											\vel, knob.at(2,count).value,
+											\ampHz,knob.at(3,count).value,
+											\maxPartial,knob.at(4,count).value]);
+										}
+										{buttonsSignals[index].value == 2}
+										{
+											//notesArray[index].free;
+											notesArray[index] = Synth(\addTri,[
+											\fund,knob.at(0,count).value,
+											\totalAmp,knob.at(1,count).value,
+											\vel, knob.at(2,count).value,
+											\ampHz,knob.at(3,count).value,
+											\maxPartial,knob.at(4,count).value]);
+										};
 								});
 							});
+							//Control the signal values only if the buttons are on
 							knobMatrix.do({
 								arg me, count;
 								//Frequency range//
@@ -402,7 +435,10 @@ playButton.action_({
                         //Button off
 						{state.value == 0}
 						//Stop the sound
-						{notesArray[index].free;}
+						{
+							notesArray[index].free;
+					        buttonsSignals[index].enabled_(true);
+						}
 					}
 				});
 
@@ -414,9 +450,7 @@ playButton.action_({
 				"Goodbye!!".postln
 				};
 
-			},{/*else*/}
-		);
-
+		},{/*else*/});
 });//End of playButton.action
 
 "Additive Synthesis Demo Starts".postln;
