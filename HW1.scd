@@ -1,7 +1,3 @@
-/*TODO
-Fix only buttons enabled
-*/
-
 /*
 *************************************************************************************************************************************
 --Company: Politecnico di Milano
@@ -294,7 +290,7 @@ buttonArray.do({
 playButton.action_({
 		arg me;
 		/*Setup of variables */
-		var displayKnobs, displayButtons, knobMatrix, buttonsWave, displayWaves, buttonsSignals;
+		var displayKnobs,displayButtons,knobMatrix,buttonsWave,displayWaves,buttonsSignals,displayFreq,buttonsFreq;
 		var numKnob = 1, myWave=0;
 		var notesArray = Array.newClear(number.size);
 
@@ -311,7 +307,7 @@ playButton.action_({
 				numKnob = number.size;
 
 				/*Setup of the additive Window */
-				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,800,70*numKnob + 50))
+				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,810,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
@@ -333,29 +329,49 @@ playButton.action_({
 				displayWaves.decorator = FlowLayout(displayWaves.bounds, margin:10@40,gap: 10@20);
 				buttonsSignals = Array.fill(numKnob,{Button(displayWaves, 100@50)});
 
+				displayFreq = CompositeView.new(additiveWindow,
+					Rect(displayKnobs.bounds.width+displayButtons.bounds.width+displayWaves.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
+				displayFreq.decorator = FlowLayout(displayFreq.bounds, margin:10@40,gap: 10@20);
+				buttonsFreq = Array.fill(numKnob,{Button(displayFreq, 100@50)});
+
+
 				buttonsSignals.do({
 					arg me;
-					me.states = [["SINE",Color.black],["SAW",Color.black,Color.red],["TRI",Color.black,Color.green]]});
+					me.states = [
+						["SINE",Color.black,Color.new255(255,100,100)],
+						["SAW",Color.black,Color.new255(100,255,100)],
+						["TRI",Color.black,Color.new255(100,100,255)]
+				]});
 
 				/*Initialization of knobs */
 				knobMatrix.do({
 				arg me,count;
-					for(0,4){
+					for(0,5){
 						arg i;
 						/*Frequency*/
 						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1,0),initVal:0);
+						me.at(0,count).value = 0;
 						/*Amplitude*/
 						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
+						me.at(1,count).value = 0.5;
 						/*Speed*/
 						me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						me.at(2,count).value = 1;
 						/*AmpHz*/
 						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+						me.at(3,count).value = 1;
 						/*maxPartial*/
 						me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						me.at(4,count).value = 1;
 						/*Octave*/
 						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1,0),initVal:0);
+						me.at(5,count).value = 0;
 					}
 				});
+				buttonsFreq.do({
+					arg me,count;
+					u = f.value(number[count]-1);
+					me.states = [[u.asStringPrec(3),Color.black]]});
 
 				//Definition of the states of the start and stop buttons
 				buttonsWave.do({
@@ -384,17 +400,20 @@ playButton.action_({
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addSin,[
-											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
+											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
 											\maxPartial,knob.at(4,count).value]);
+											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
+											u.postln;
+											buttonsFreq[index].states = [[u.asString,Color.black]];
 										}
 										{buttonsSignals[index].value == 1}
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addSaw,[
-											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
+											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
@@ -404,7 +423,7 @@ playButton.action_({
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addTri,[
-											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
+											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
@@ -416,8 +435,12 @@ playButton.action_({
 							knobMatrix.do({
 								arg me, count;
 								//Frequency range//
-								me.at(0,count).action_({arg io;notesArray[count].set(\fund,
-									(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;)});
+								me.at(0,count).action_({arg io;notesArray[count].set(
+									\fund,(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value);
+
+								u = (f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;
+								buttonsFreq[count].states = [[u.asStringPrec(3),Color.black]];
+								});
 
 								//Amplitude//
 								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
@@ -434,7 +457,9 @@ playButton.action_({
 								me.at(5,count).action_({
 									arg io;
 									notesArray[count].set(\fund,f.value(number[count]-1)*pow(2,io.value));
-									//me.at(0,count).value = f.value(number[count]-1)*pow(2,io.value);
+
+									u = (f.value(number[count]-1)*pow(2,io.value)) + me.at(0,count).value;
+								    buttonsFreq[count].states = [[u.asStringPrec(3),Color.black]];
 								});
 
 							});
@@ -445,6 +470,7 @@ playButton.action_({
 						{
 							notesArray[index].free;
 					        buttonsSignals[index].enabled_(true);
+
 						}
 					}
 				});
