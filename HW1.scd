@@ -349,22 +349,22 @@ playButton.action_({
 					for(0,5){
 						arg i;
 						/*Frequency*/
-						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1,0),initVal:0);
+						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1),initVal:0);
 						me.at(0,count).value = 0;
 						/*Amplitude*/
-						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
+						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1),initVal:0.5);
 						me.at(1,count).value = 0.5;
 						/*Speed*/
-						me.at(2).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						me.at(2).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
 						me.at(2,count).value = 1;
 						/*AmpHz*/
-						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
+						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1),initVal:1);
 						me.at(3,count).value = 1;
 						/*maxPartial*/
-						me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						me.at(4).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
 						me.at(4,count).value = 1;
 						/*Octave*/
-						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1,0),initVal:0);
+						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1),initVal:0);
 						me.at(5,count).value = 0;
 					}
 				});
