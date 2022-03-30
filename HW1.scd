@@ -34,7 +34,7 @@ s.waitForBoot({
 /*Setup of  variables */
 var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, cancelButton;
 var funPrintText, funPrintKnobText, funNote;
-var space = 0, counterNumbers = 0, wave=0, fundamentalNote = 261.60;
+var space = 0, counterNumbers = 0, wave=0, fundamentalNote = 523.20;
 var number = Array.new(10);
 
 Window.closeAll;
@@ -311,16 +311,16 @@ playButton.action_({
 				numKnob = number.size;
 
 				/*Setup of the additive Window */
-				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,600,70*numKnob + 50))
+				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,800,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
 
 				/*Setup of the display that contains the knobs */
-				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,350,70*numKnob + 50)).background_(Color.black);
+				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,450,70*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
-				knobMatrix = Array.fill2D(numKnob,5, {EZKnob(displayKnobs,50@60)});
+				knobMatrix = Array.fill2D(numKnob,6, {EZKnob(displayKnobs,50@60)});
 
 				/*Setup of the display that contains the buttons for start and stop sound*/
 				displayButtons = CompositeView.new(additiveWindow,
@@ -343,9 +343,7 @@ playButton.action_({
 					for(0,4){
 						arg i;
 						/*Frequency*/
-						me.at(0,count).set(spec:ControlSpec(f.value(number[count]-1)-50, f.value(number[count]-1)+50,
-							\lin,0.1,f.value(number[count]-1)),
-							initVal:f.value(number[count]-1));
+						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1,0),initVal:0);
 						/*Amplitude*/
 						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1,1),initVal:0.5);
 						/*Speed*/
@@ -354,6 +352,8 @@ playButton.action_({
 						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1,1),initVal:1);
 						/*maxPartial*/
 						me.at(4).set(spec:ControlSpec(1,10,\lin,1,1),initVal:1);
+						/*Octave*/
+						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1,0),initVal:0);
 					}
 				});
 
@@ -374,7 +374,7 @@ playButton.action_({
 						{(state.value == 1)}
 						{
 						//Generate SinOsc
-					        buttonsSignals[index].enabled_(false);
+							buttonsSignals[index].enabled_(false);
 							knobMatrix.do({
 								arg knob,count;
 								if(count == index,
@@ -384,7 +384,7 @@ playButton.action_({
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addSin,[
-											\fund,knob.at(0,count).value,
+											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
@@ -394,7 +394,7 @@ playButton.action_({
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addSaw,[
-											\fund,knob.at(0,count).value,
+											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
@@ -404,7 +404,7 @@ playButton.action_({
 										{
 											//notesArray[index].free;
 											notesArray[index] = Synth(\addTri,[
-											\fund,knob.at(0,count).value,
+											\fund,f.value(number[count]-1)+ knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
@@ -416,7 +416,8 @@ playButton.action_({
 							knobMatrix.do({
 								arg me, count;
 								//Frequency range//
-								me.at(0,count).action_({arg me;notesArray[count].set(\fund, me.value;)});
+								me.at(0,count).action_({arg io;notesArray[count].set(\fund,
+									(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;)});
 
 								//Amplitude//
 								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
@@ -429,6 +430,12 @@ playButton.action_({
 
 								//Value of the range of the tones//
 								me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
+
+								me.at(5,count).action_({
+									arg io;
+									notesArray[count].set(\fund,f.value(number[count]-1)*pow(2,io.value));
+									//me.at(0,count).value = f.value(number[count]-1)*pow(2,io.value);
+								});
 
 							});
 						}
