@@ -206,7 +206,7 @@ CmdPeriod.doOnce({mainWindow.close});
 /*Phone*/
 phone = CompositeView.new(mainWindow,Rect(10,10,mainWindow.bounds.width - 20,mainWindow.bounds.height - 20))
 	.background_(Color.grey);
-	StaticText.new(phone,Rect(70,0,500,100)).string_("FOURIER'S PHONE 2022").font_(Font("Artifakt Element Light",30));
+	StaticText.new(phone,Rect(70,0,500,100)).string_("FOURIER'S PHONE 3310").font_(Font("Artifakt Element Light",30));
 
 /*Phone screen*/
 phoneScreen = CompositeView.new(phone,Rect(40,80,400,200)).background_(Color.cyan);
