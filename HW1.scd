@@ -180,8 +180,8 @@ funPrintText = {
 //Function that prints the name of the variable parameters of the waves
 funPrintKnobText = {
 		arg viewPrint;
-		TextView(viewPrint,Rect(0,0,400,30))
-		.string_("Freq           Amp        Speed     AmpHz      Range")
+		TextView(viewPrint,Rect(0,0,450,35))
+		.string_("Detune       Amp       Speed       AmpHz       Range      Octave")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
 		.front;
@@ -332,7 +332,7 @@ playButton.action_({
 				displayFreq = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width+displayWaves.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
 				displayFreq.decorator = FlowLayout(displayFreq.bounds, margin:10@40,gap: 10@20);
-				buttonsFreq = Array.fill(numKnob,{Button(displayFreq, 100@50)});
+				buttonsFreq = Array.fill(numKnob,{StaticText(displayFreq, 100@50)});
 
 
 				buttonsSignals.do({
@@ -350,28 +350,41 @@ playButton.action_({
 						arg i;
 						/*Frequency*/
 						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1),initVal:0);
-						me.at(0,count).value = 0;
+
 						/*Amplitude*/
 						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1),initVal:0.5);
-						me.at(1,count).value = 0.5;
+
 						/*Speed*/
 						me.at(2).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
-						me.at(2,count).value = 1;
+
 						/*AmpHz*/
 						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1),initVal:1);
-						me.at(3,count).value = 1;
+
 						/*maxPartial*/
 						me.at(4).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
-						me.at(4,count).value = 1;
+
 						/*Octave*/
 						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1),initVal:0);
-						me.at(5,count).value = 0;
-					}
+
+					};
+
+					me.at(0,count).action_({
+						arg io;
+						u = (f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;
+						buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+						});
+					me.at(5,count).action_({arg io;
+						u = (f.value(number[count]-1)*pow(2,io.value)) + me.at(0,count).value;
+						buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+					});
+
 				});
+
 				buttonsFreq.do({
 					arg me,count;
 					u = f.value(number[count]-1);
-					me.states = [[u.asStringPrec(3),Color.black]]});
+					me.string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+					});
 
 				//Definition of the states of the start and stop buttons
 				buttonsWave.do({
@@ -398,7 +411,7 @@ playButton.action_({
 										case
 										{buttonsSignals[index].value == 0}
 										{
-											//notesArray[index].free;
+											notesArray[index].free;
 											notesArray[index] = Synth(\addSin,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -406,12 +419,11 @@ playButton.action_({
 											\ampHz,knob.at(3,count).value,
 											\maxPartial,knob.at(4,count).value]);
 											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
-											u.postln;
-											buttonsFreq[index].states = [[u.asString,Color.black]];
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 										}
 										{buttonsSignals[index].value == 1}
 										{
-											//notesArray[index].free;
+											notesArray[index].free;
 											notesArray[index] = Synth(\addSaw,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -421,7 +433,7 @@ playButton.action_({
 										}
 										{buttonsSignals[index].value == 2}
 										{
-											//notesArray[index].free;
+											notesArray[index].free;
 											notesArray[index] = Synth(\addTri,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -433,23 +445,24 @@ playButton.action_({
 							});
 							//Control the signal values only if the buttons are on
 							knobMatrix.do({
-								arg me, count;
-								//Frequency range//
+							arg me, count;
+							//Frequency range//
+
 								me.at(0,count).action_({arg io;notesArray[count].set(
 									\fund,(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value);
 
 								u = (f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;
-								buttonsFreq[count].states = [[u.asStringPrec(3),Color.black]];
+								buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 								});
 
 								//Amplitude//
-								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value;)});
+								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value);});
 
 								//Speed of the ringtone//
-								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value;)});
+								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value);"entro".postln;});
 
 								//Value of ampHz//
-								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value;)});
+								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value);"entro".postln;});
 
 								//Value of the range of the tones//
 								me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
@@ -457,9 +470,8 @@ playButton.action_({
 								me.at(5,count).action_({
 									arg io;
 									notesArray[count].set(\fund,f.value(number[count]-1)*pow(2,io.value));
-
 									u = (f.value(number[count]-1)*pow(2,io.value)) + me.at(0,count).value;
-								    buttonsFreq[count].states = [[u.asStringPrec(3),Color.black]];
+								    buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 								});
 
 							});
@@ -472,8 +484,8 @@ playButton.action_({
 					        buttonsSignals[index].enabled_(true);
 
 						}
-					}
-				});
+				}
+			});
 
 				/*Back to the phone*/
 				additiveWindow.onClose = {
