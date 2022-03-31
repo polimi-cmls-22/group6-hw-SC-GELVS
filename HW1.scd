@@ -180,8 +180,8 @@ funPrintText = {
 //Function that prints the name of the variable parameters of the waves
 funPrintKnobText = {
 		arg viewPrint;
-		TextView(viewPrint,Rect(0,0,400,30))
-		.string_("Freq           Amp        Speed     AmpHz      Range")
+		TextView(viewPrint,Rect(0,0,450,30))
+		.string_("  Freq         Ampli        Speed      AmpHz      Range      Octave")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
 		.front;
