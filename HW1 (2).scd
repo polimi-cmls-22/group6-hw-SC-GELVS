@@ -49,36 +49,33 @@ SynthDef(\ring, {
 
 //SynthDef for generate SinOsc wave
 SynthDef.new(\addSin, {
-		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
+		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1;
 		var amp,sig,freq;
-		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
+		amp = SinOsc.kr(freq:ampHz,phase:0,mul:0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
-		sig = SinOsc.ar(freq,0, amp);
-		sig = RLPF.ar(sig, fc, rq);
+		sig = SinOsc.ar(freq,0,amp);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
 
 //SynthDef for generate  LFSaw wave
 SynthDef.new(\addSaw, {
-		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1, fc = 20000, rq = 0.25;
+		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1;
 		var amp,sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
 		sig = LFSaw.ar(freq,0, amp);
-		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
 
 //SynthDef for generate  LFTri wave
 SynthDef.new(\addTri, {
-		arg ampHz=10, fund=440, maxPartial=4,totalAmp=0.5,vel = 1, fc = 20000, rq = 0.25;
+		arg ampHz=10, fund=440, maxPartial=4,totalAmp=0.5,vel = 1;
 		var amp, sig,freq;
 		amp = SinOsc.kr(ampHz,0,0.12) * totalAmp;
 		freq = LFNoise0.kr(vel).exprange(fund, fund * maxPartial).round(fund);
 	    sig = LFTri.ar(freq,0,amp);
-		sig = RLPF.ar(sig, fc, rq);
 		Out.ar(0, sig);
 		Out.ar(1, sig);
 	}).add;
@@ -180,7 +177,7 @@ funPrintText = {
 //Function that prints the name of the variable parameters of the waves
 funPrintKnobText = {
 		arg viewPrint;
-		TextView(viewPrint,Rect(0,0,450,35))
+		TextView(viewPrint,Rect(0,0,600,35))
 		.string_("Detune       Amp       Speed       AmpHz       Range      Octave")
 		.editable_(false)
 		.font_(Font("Artifakt Element Light",15))
@@ -316,21 +313,25 @@ playButton.action_({
 				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,450,70*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
+
 				knobMatrix = Array.fill2D(numKnob,6, {EZKnob(displayKnobs,50@60)});
 
 				/*Setup of the display that contains the buttons for start and stop sound*/
 				displayButtons = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
 				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
+				TextView(additiveWindow,Rect(450,0,120,35)).string_("NOTES").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.cyan).front;
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
 				displayWaves = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width,0,120,70*numKnob + 50)).background_(Color.grey);
 				displayWaves.decorator = FlowLayout(displayWaves.bounds, margin:10@40,gap: 10@20);
+				TextView(additiveWindow,Rect(570,0,120,35)).string_("WAVES").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.yellow).front;
 				buttonsSignals = Array.fill(numKnob,{Button(displayWaves, 100@50)});
 
 				displayFreq = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width+displayWaves.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
+				TextView(additiveWindow,Rect(690,0,120,35)).string_("FREQUENCY").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.green).front;
 				displayFreq.decorator = FlowLayout(displayFreq.bounds, margin:10@40,gap: 10@20);
 				buttonsFreq = Array.fill(numKnob,{StaticText(displayFreq, 100@50)});
 
@@ -349,7 +350,7 @@ playButton.action_({
 					for(0,5){
 						arg i;
 						/*Frequency*/
-						me.at(0,count).set(spec:ControlSpec(-100,100,\lin,1),initVal:0);
+						me.at(0,count).set(spec:ControlSpec(-50,50,\lin,1),initVal:0);
 
 						/*Amplitude*/
 						me.at(1).set(spec:ControlSpec(0,1,\lin,0.1),initVal:0.5);
@@ -389,7 +390,8 @@ playButton.action_({
 				//Definition of the states of the start and stop buttons
 				buttonsWave.do({
 					arg me, index;
-					me.states = [[e.value(number[index]).asString, Color.black],[e.value(number[index]).asString, Color.black, Color.green]];
+					me.states_([[e.value(number[index]).asString, Color.black],[e.value(number[index]).asString, Color.black, Color.green]]);
+					me.font = Font("Artifakt Element Light",20);
 				});
 
 				//Definition of the action of the start and stop buttons
@@ -411,7 +413,7 @@ playButton.action_({
 										case
 										{buttonsSignals[index].value == 0}
 										{
-											notesArray[index].free;
+
 											notesArray[index] = Synth(\addSin,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -423,7 +425,7 @@ playButton.action_({
 										}
 										{buttonsSignals[index].value == 1}
 										{
-											notesArray[index].free;
+
 											notesArray[index] = Synth(\addSaw,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -433,7 +435,7 @@ playButton.action_({
 										}
 										{buttonsSignals[index].value == 2}
 										{
-											notesArray[index].free;
+
 											notesArray[index] = Synth(\addTri,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -459,10 +461,10 @@ playButton.action_({
 								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value);});
 
 								//Speed of the ringtone//
-								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value);"entro".postln;});
+								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value);});
 
 								//Value of ampHz//
-								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value);"entro".postln;});
+								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value);});
 
 								//Value of the range of the tones//
 								me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
@@ -481,7 +483,7 @@ playButton.action_({
 						//Stop the sound
 						{
 							notesArray[index].free;
-					        buttonsSignals[index].enabled_(true);
+							buttonsSignals[index].enabled_(true);
 
 						}
 				}
