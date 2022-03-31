@@ -1,5 +1,5 @@
 /*
-*************************************************************************************************************************************
+*******************************************************************************************************************************************
 --Company: Politecnico di Milano
 --Course name: Computer Music - Languages and Systems
 --Module name: Homework 1
@@ -9,19 +9,20 @@
 --Group nickname: GELVS
 --Engineers:
             Perego Gabriele
+            Del Moro Samuele
             Roncuzzi Enrico
             Di Clerico Letizia
             Negroni Viola
-            Del Moro Samuele
+
 --Description:
 If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
-In this assignement we created a demo prototype of additive synthesis in the form of a mobile phone able to generate
-a series of components, that can be modulated and modified in real time, for create a ringtone jingle.
+In this project we created a demo prototype of a mobile phone that generates ringtones through additive synthesis,generating
+a series of components that can be modulated and modified in real time.
 Each button of the phone represents a musical note and you can enter from 1 up to 7 numbers to create a bank of, up to 7,signals.
-In the phase in which the signals are generated, it is possible to start them individually, or simultaneously,
-and modularly: frequency, amplitude, cutoff, ampHz and jingle time.
+In the phase in which the signals are generated, it is possible to start them individually or simultaneously, and modulate some parameters,
+such as: frequency, amplitude, speed of ringtones, amplitude modulation ,octave intervals.
 
-*************************************************************************************************************************************
+*******************************************************************************************************************************************
 */
 
 /*Start the server*/
@@ -58,7 +59,7 @@ SynthDef.new(\addSin, {
 		Out.ar(1, sig);
 	}).add;
 
-//SynthDef for generate  LFSaw wave
+//SynthDef for generate LFSaw wave
 SynthDef.new(\addSaw, {
 		arg ampHz=10, fund=440, maxPartial=4, totalAmp=0.5, vel = 1;
 		var amp,sig,freq;
@@ -184,7 +185,6 @@ funPrintKnobText = {
 		.front;
 	};
 
-/*Setup of Routine*/
 
 /*Initialization of window components*/
 
@@ -313,29 +313,32 @@ playButton.action_({
 				displayKnobs = CompositeView.new(additiveWindow,Rect(0,0,450,70*numKnob + 50)).background_(Color.black);
 				funPrintKnobText.value(displayKnobs);
 				displayKnobs.decorator = FlowLayout(displayKnobs.bounds, margin:10@40,gap: 20@10);
-
 				knobMatrix = Array.fill2D(numKnob,6, {EZKnob(displayKnobs,50@60)});
 
 				/*Setup of the display that contains the buttons for start and stop sound*/
+
+				//Display of buttons that start and stop the signals
 				displayButtons = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
 				displayButtons.decorator = FlowLayout(displayButtons.bounds, margin:10@40,gap: 10@20);
 				TextView(additiveWindow,Rect(450,0,120,35)).string_("NOTES").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.cyan).front;
 				buttonsWave = Array.fill(numKnob,{Button(displayButtons, 100@50)});
 
+				//Display of buttons that change the type of waves (SinOsc, LFSaw, LFTri)
 				displayWaves = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width,0,120,70*numKnob + 50)).background_(Color.grey);
 				displayWaves.decorator = FlowLayout(displayWaves.bounds, margin:10@40,gap: 10@20);
 				TextView(additiveWindow,Rect(570,0,120,35)).string_("WAVES").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.yellow).front;
 				buttonsSignals = Array.fill(numKnob,{Button(displayWaves, 100@50)});
 
+				//Display that shows the intervals of frequencies
 				displayFreq = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width+displayWaves.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
 				TextView(additiveWindow,Rect(690,0,120,35)).string_("FREQUENCY").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.green).front;
 				displayFreq.decorator = FlowLayout(displayFreq.bounds, margin:10@40,gap: 10@20);
 				buttonsFreq = Array.fill(numKnob,{StaticText(displayFreq, 100@50)});
 
-
+				/*Setup of buttons that change the type of signals*/
 				buttonsSignals.do({
 					arg me;
 					me.states = [
@@ -349,7 +352,8 @@ playButton.action_({
 				arg me,count;
 					for(0,5){
 						arg i;
-						/*Frequency*/
+
+						/*Frequency-detune*/
 						me.at(0,count).set(spec:ControlSpec(-50,50,\lin,1),initVal:0);
 
 						/*Amplitude*/
@@ -358,13 +362,13 @@ playButton.action_({
 						/*Speed*/
 						me.at(2).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
 
-						/*AmpHz*/
+						/*AmpHz-modulation*/
 						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1),initVal:1);
 
-						/*maxPartial*/
+						/*Range of octaves*/
 						me.at(4).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
 
-						/*Octave*/
+						/*Octave invetvals*/
 						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1),initVal:0);
 
 					};
@@ -380,31 +384,31 @@ playButton.action_({
 					});
 
 				});
-
+				/*Print the frequency intervals*/
 				buttonsFreq.do({
 					arg me,count;
 					u = f.value(number[count]-1);
 					me.string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 					});
 
-				//Definition of the states of the start and stop buttons
+				/*Definition of the states of the start and stop buttons*/
 				buttonsWave.do({
 					arg me, index;
 					me.states_([[e.value(number[index]).asString, Color.black],[e.value(number[index]).asString, Color.black, Color.green]]);
 					me.font = Font("Artifakt Element Light",20);
 				});
 
-				//Definition of the action of the start and stop buttons
+				/*Definition of the action of the start and stop buttons*/
 				buttonsWave.do({
 					arg me, index;
 					me.action = {
 						arg state;
 
 						case
-						//If the button is pressed: start to play
+						//Button ON
 						{(state.value == 1)}
 						{
-						//Generate SinOsc
+						//Generate the signals
 							buttonsSignals[index].enabled_(false);
 							knobMatrix.do({
 								arg knob,count;
@@ -420,6 +424,7 @@ playButton.action_({
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
 											\maxPartial,knob.at(4,count).value]);
+											//Update the range of octaves
 											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
 											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 										}
@@ -432,6 +437,9 @@ playButton.action_({
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
 											\maxPartial,knob.at(4,count).value]);
+											//Update the range of octaves
+											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 										}
 										{buttonsSignals[index].value == 2}
 										{
@@ -442,33 +450,38 @@ playButton.action_({
 											\vel, knob.at(2,count).value,
 											\ampHz,knob.at(3,count).value,
 											\maxPartial,knob.at(4,count).value]);
+											//Update the range of octaves
+											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 										};
 								});
 							});
-							//Control the signal values only if the buttons are on
+
+
 							knobMatrix.do({
 							arg me, count;
-							//Frequency range//
 
-								me.at(0,count).action_({arg io;notesArray[count].set(
-									\fund,(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value);
-
-								u = (f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;
-								buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+								/*Update requency-detune*/
+								me.at(0,count).action_({
+									arg io;
+									notesArray[count].set(\fund,(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value);
+									u = (f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value;
+									buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 								});
 
-								//Amplitude//
+								/*Update amplitude*/
 								me.at(1,count).action_({arg me;notesArray[count].set(\totalAmp, me.value);});
 
-								//Speed of the ringtone//
+								/*Update speed of ringtone*/
 								me.at(2,count).action_({arg me;notesArray[count].set(\vel, me.value);});
 
-								//Value of ampHz//
+								/*Update ampHz-modulation*/
 								me.at(3,count).action_({arg me;notesArray[count].set(\ampHz, me.value);});
 
-								//Value of the range of the tones//
+								/*Update range of octaves*/
 								me.at(4,count).action_({arg me;notesArray[count].set(\maxPartial, me.value;)});
 
+								/*Update Octave invetvals*/
 								me.at(5,count).action_({
 									arg io;
 									notesArray[count].set(\fund,f.value(number[count]-1)*pow(2,io.value));
@@ -478,7 +491,7 @@ playButton.action_({
 
 							});
 						}
-                        //Button off
+                        //Button OFF
 						{state.value == 0}
 						//Stop the sound
 						{
@@ -497,7 +510,7 @@ playButton.action_({
 				"Goodbye!!".postln
 				};
 
-		},{/*else*/});
+		},{});
 });//End of playButton.action
 
 "Additive Synthesis Demo Starts".postln;
