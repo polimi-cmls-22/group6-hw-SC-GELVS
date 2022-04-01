@@ -15,12 +15,9 @@
             Negroni Viola
 
 --Description:
-If Fourier had lived in the 90s, how would he have reacted to a cell phone full of ringtones ?
-In this project we created a demo prototype of a mobile phone that generates ringtones through additive synthesis,generating
-a series of components that can be modulated and modified in real time.
-Each button of the phone represents a musical note and you can enter from 1 up to 7 numbers to create a bank of, up to 7,signals.
-In the phase in which the signals are generated, it is possible to start them individually or simultaneously, and modulate some parameters,
-such as: frequency, amplitude, speed of ringtones, amplitude modulation ,octave intervals.
+If Fourier had lived in the 90s, how would he have reacted to a mobile phone full of ringtones?
+In this project we created an instrument (with the appearance of an old mobile phone) that generates ringtones through additive synthesis, generating a series of signals that can be played individually or simultaneously, and which can be modulated by changing some of their parameters.
+A visual feedback of the resulting sound is given by both a frequency analyzer and a stethoscope.
 
 *******************************************************************************************************************************************
 */
@@ -198,6 +195,7 @@ mainWindow = Window.new("Fourier's phone - Additive Synthesis",Rect(Window.scree
 mainWindow.onClose = {
 		Server.freeAll;
 		//Server.killAll;
+		Window.closeAll;
 		"Bye Bye!".postln
 };
 
@@ -304,7 +302,7 @@ playButton.action_({
 				numKnob = number.size;
 
 				/*Setup of the additive Window */
-				additiveWindow = Window.new("Additive Synthesis",Rect(600,200,810,70*numKnob + 50))
+				additiveWindow = Window.new("Additive Synthesis",Rect(10,500-(50*numKnob),810,70*numKnob + 50))
 				.alwaysOnTop_(true)
 				.background_(Color.new255(50,50,50))
 				.front;
