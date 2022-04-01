@@ -334,7 +334,7 @@ playButton.action_({
 				//Display that shows the intervals of frequencies
 				displayFreq = CompositeView.new(additiveWindow,
 					Rect(displayKnobs.bounds.width+displayButtons.bounds.width+displayWaves.bounds.width,0,120,70*numKnob + 50)).background_(Color.black);
-				TextView(additiveWindow,Rect(690,0,120,35)).string_("FREQUENCY").editable_(false).font_(Font("Artifakt Element Light",15)).background_(Color.green).front;
+				TextView(additiveWindow,Rect(690,0,120,35)).string_("MAIN FREQUENCY").editable_(false).font_(Font("Artifakt Element Light",12)).background_(Color.green).front;
 				displayFreq.decorator = FlowLayout(displayFreq.bounds, margin:10@40,gap: 10@20);
 				buttonsFreq = Array.fill(numKnob,{StaticText(displayFreq, 100@50)});
 
@@ -366,7 +366,7 @@ playButton.action_({
 						me.at(3).set(spec:ControlSpec(0,10,\lin,0.1),initVal:1);
 
 						/*Range of octaves*/
-						me.at(4).set(spec:ControlSpec(1,10,\lin,1),initVal:1);
+						me.at(4).set(spec:ControlSpec(1,4,\lin,1),initVal:1);
 
 						/*Octave invetvals*/
 						me.at(5,count).set(spec:ControlSpec(-2,2,\lin,1),initVal:0);
@@ -417,7 +417,6 @@ playButton.action_({
 										case
 										{buttonsSignals[index].value == 0}
 										{
-
 											notesArray[index] = Synth(\addSin,[
 											\fund,f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value,
 											\totalAmp,knob.at(1,count).value,
@@ -439,7 +438,8 @@ playButton.action_({
 											\maxPartial,knob.at(4,count).value]);
 											//Update the range of octaves
 											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
-											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white)
+											.font_(Font("Artifakt Element Light",20));
 										}
 										{buttonsSignals[index].value == 2}
 										{
@@ -452,16 +452,16 @@ playButton.action_({
 											\maxPartial,knob.at(4,count).value]);
 											//Update the range of octaves
 											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
-											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white)
+											.font_(Font("Artifakt Element Light",20));
 										};
 								});
 							});
 
-
 							knobMatrix.do({
 							arg me, count;
 
-								/*Update requency-detune*/
+								/*Update frequency-detune*/
 								me.at(0,count).action_({
 									arg io;
 									notesArray[count].set(\fund,(f.value(number[count]-1)*pow(2,me.at(5,count).value)) + io.value);
@@ -488,7 +488,6 @@ playButton.action_({
 									u = (f.value(number[count]-1)*pow(2,io.value)) + me.at(0,count).value;
 								    buttonsFreq[count].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
 								});
-
 							});
 						}
                         //Button OFF
