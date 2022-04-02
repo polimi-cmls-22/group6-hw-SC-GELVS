@@ -191,6 +191,10 @@ mainWindow = Window.new("Fourier's phone - Additive Synthesis",Rect(Window.scree
 	.background_(Color.black)
 	.front;
 
+/*Setup of the plots*/
+	s.freqscope.window.setTopLeftBounds(Rect(900,10), menuSpacer: 45);
+	s.scope.window.setTopLeftBounds(Rect(900,400,604,328), menuSpacer: 45);
+
 /*CLOSE ALL AND STOP ALL*/
 mainWindow.onClose = {
 		Server.freeAll;
@@ -281,17 +285,13 @@ buttonArray.do({
 
 		});
 });
-
+//---------------------------------------------------------------------------------------------------------------------------------------------------------//
 playButton.action_({
 		arg me;
 		/*Setup of variables */
 		var displayKnobs,displayButtons,knobMatrix,buttonsWave,displayWaves,buttonsSignals,displayFreq,buttonsFreq;
 		var numKnob = 1, myWave=0;
 		var notesArray = Array.newClear(number.size);
-
-		/*Setup of the plots*/
-		s.freqscope;
-		s.scope;
 
 		if((me.value == 1) && (number.size > 0),
 			{
