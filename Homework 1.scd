@@ -1,5 +1,6 @@
 /*
-*******************************************************************************************************************************************
+***************************************************************************************************************************************************************
+
 --Company: Politecnico di Milano
 --Course name: Computer Music - Languages and Systems
 --Module name: Homework 1
@@ -8,18 +9,17 @@
 --Group ID: 6
 --Group nickname: GELVS
 --Engineers:
-            Perego Gabriele
             Del Moro Samuele
-            Roncuzzi Enrico
             Di Clerico Letizia
             Negroni Viola
-
+            Perego Gabriele
+            Roncuzzi Enrico
 --Description:
 If Fourier had lived in the 90s, how would he have reacted to a mobile phone full of ringtones?
 In this project we created an instrument (with the appearance of an old mobile phone) that generates ringtones through additive synthesis, generating a series of signals that can be played individually or simultaneously, and which can be modulated by changing some of their parameters.
 A visual feedback of the resulting sound is given by both a frequency analyzer and a stethoscope.
 
-*******************************************************************************************************************************************
+***************************************************************************************************************************************************************
 */
 
 /*Start the server*/
@@ -27,7 +27,7 @@ s.waitForBoot({
 
 /*Setup of  variables */
 var mainWindow, additiveWindow, phone, phoneScreen, phoneKeyboard,phoneControl, buttonArray, playButton, cancelButton;
-var funPrintText, funPrintKnobText, funNote;
+var funPrintText, funPrintKnobText, funNote, egg;
 var space = 0, counterNumbers = 0, wave=0, fundamentalNote = 523.20;
 var number = Array.new(10);
 
@@ -79,6 +79,33 @@ SynthDef.new(\addTri, {
 	}).add;
 
 /*Setup of Functions*/
+
+//Function for print E-Eggs
+egg = {
+		arg a;
+		case
+		{a == ["3","3","1","0"]}{
+		w = Window.new("EGG",Rect(900,700,200,100),false).alwaysOnTop_(true).background_(Color.black).front;
+			TextView(w,Rect(0,0,200,100)).string_("NOKIA EASTER EGG FOUND xD").editable_(false)
+			.font_(Font("Artifakt Element Light",20)).background_(Color.cyan).front;
+		}
+		{a == ["1","3","5","6","8","*","#"]}{
+		w = Window.new("EGG",Rect(900,600,200,100),false).alwaysOnTop_(true).background_(Color.black).front;
+		TextView(w,Rect(0,0,200,100)).string_("C MAJOR SCALE EASTER EGG FOUND xD").editable_(false)
+			.font_(Font("Artifakt Element Light",20)).background_(Color.green).front;
+		}
+		{a == ["*","#","1","3","5","6","8"]}{
+		w = Window.new("EGG",Rect(900,500,200,100),false).alwaysOnTop_(true).background_(Color.black).front;
+		TextView(w,Rect(0,0,200,100)).string_("A MINOR SCALE EASTER EGG FOUND xD").editable_(false)
+			.font_(Font("Artifakt Element Light",20)).background_(Color.yellow).front;
+		}
+		{a == ["1","8","2","*","5","#","7"]}{
+		w = Window.new("EGG",Rect(900,400,200,100),false).alwaysOnTop_(true).background_(Color.black).front;
+		TextView(w,Rect(0,0,200,100)).string_("CIRCLE OF FIFTHS EASTER EGG FOUND xD").editable_(false)
+			.font_(Font("Artifakt Element Light",20)).background_(Color.new255(255,100,100)).front;
+		}
+		{}{};
+	};
 
 //Function that convert the number pressed to a musical note string
 e = {
@@ -192,13 +219,13 @@ mainWindow = Window.new("Fourier's phone - Additive Synthesis",Rect(Window.scree
 	.front;
 
 /*Setup of the plots*/
-	s.freqscope.window.setTopLeftBounds(Rect(900,10), menuSpacer: 45);
-	s.scope.window.setTopLeftBounds(Rect(900,400,604,328), menuSpacer: 45);
+s.freqscope.window.setTopLeftBounds(Rect(900,10), menuSpacer: 45);
+s.scope.window.setTopLeftBounds(Rect(900,400,604,328), menuSpacer: 45);
 
 /*CLOSE ALL AND STOP ALL*/
 mainWindow.onClose = {
-		Server.freeAll;
-		//Server.killAll;
+		//Server.freeAll;
+		Server.killAll;
 		Window.closeAll;
 		"Bye Bye!".postln
 };
@@ -285,7 +312,7 @@ buttonArray.do({
 
 		});
 });
-//---------------------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------------------//
 playButton.action_({
 		arg me;
 		/*Setup of variables */
@@ -297,6 +324,9 @@ playButton.action_({
 			{
 				/*Make the phone invisible*/
 				mainWindow.visible_(false);
+
+				/*E-Egg controller*/
+				egg.value(h.value(number));
 
 				/*Setup of the number of knobs (they depend by the size of the phone number)*/
 				numKnob = number.size;
@@ -423,7 +453,8 @@ playButton.action_({
 											\maxPartial,knob.at(4,count).value]);
 											//Update the range of octaves
 											u = f.value(number[count]-1)*pow(2,knob.at(5,count).value) + knob.at(0,count).value;
-											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white).font_(Font("Artifakt Element Light",20));
+											buttonsFreq[index].string_(u.asStringPrec(3)).stringColor_(Color.white)
+											.font_(Font("Artifakt Element Light",20));
 										}
 										{buttonsSignals[index].value == 1}
 										{
@@ -509,7 +540,7 @@ playButton.action_({
 
 		},{});
 });//End of playButton.action
-
+	//----------------------------------------------------------------------------------------------------------------------------------------------------------//
 "Additive Synthesis Demo Starts".postln;
 
 });
