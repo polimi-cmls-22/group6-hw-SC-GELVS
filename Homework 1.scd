@@ -104,7 +104,6 @@ egg = {
 		TextView(w,Rect(0,0,200,100)).string_("CIRCLE OF FIFTHS EASTER EGG FOUND xD").editable_(false)
 			.font_(Font("Artifakt Element Light",20)).background_(Color.new255(255,100,100)).front;
 		}
-		{}{};
 	};
 
 //Function that convert the number pressed to a musical note string
